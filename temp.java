@@ -1,8 +1,9 @@
 public class temp {
     public static void main(String[] args) {
         //System.out.println(hashCode("call"));
-        int[] arr = {-1, 2, 3, -4, 5};
-        System.out.println(max_subarray(arr));
+        //int[] arr = {-1, 2, 3, -4, 5};
+        //System.out.println(max_subarray(arr));
+        System.out.println(-456 / 200);
     }
 
     public static int hashCode(String str) {
@@ -21,4 +22,6 @@ public class temp {
         }
         return max_sum;
     }
+
+    
 }
