@@ -2,7 +2,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
@@ -28,7 +30,7 @@ public class project2 {
         PrintStream printStream = new PrintStream(fileOutputStream);
         System.setOut(printStream);  // set system out to the file
         
-        File inputFile1 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\small_cases\\inputs/initial3.txt");
+        File inputFile1 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\small_cases\\inputs/initial4.txt");
         Scanner input1 = new Scanner(inputFile1);
 
         do {
@@ -38,7 +40,7 @@ public class project2 {
         
         input1.close();
         
-        File inputFile2 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\small_cases\\inputs/input3.txt");
+        File inputFile2 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\small_cases\\inputs/input4.txt");
         Scanner input2 = new Scanner(inputFile2);
         
         input2.nextLine(); // skip first line
@@ -214,6 +216,9 @@ public class project2 {
             if (employee.profession.equals("MANAGER")) {
                 if (cookPromotion.size() > 0 && numCooks > 1) {
                         employees.remove(employee);
+                        if (alreadyInBlacklist) {
+                            blacklist.remove(employee);
+                        }
                         if (!fired) {
                             System.out.println(employee.name + " is leaving from branch: " + this.district + ".");
                         } else {
@@ -233,6 +238,9 @@ public class project2 {
                 } 
             } else if (employee.profession.equals("COOK")) {
                 if (numCooks > 1) {
+                    if (alreadyInBlacklist) {
+                        blacklist.remove(employee);
+                    }
                     employees.remove(employee);
                     if (!fired) {
                         System.out.println(employee.name + " is leaving from branch: " + this.district + ".");
@@ -253,6 +261,9 @@ public class project2 {
                 }
             } else if (employee.profession.equals("CASHIER")) {
                 if (numCashiers > 1) {
+                    if (alreadyInBlacklist) {
+                        blacklist.remove(employee);
+                    }                    
                     employees.remove(employee);
                     if (!fired) {
                         System.out.println(employee.name + " is leaving from branch: " + this.district + ".");
@@ -274,6 +285,9 @@ public class project2 {
             } else if (employee.profession.equals("COURIER")) {
                 if (numCouriers > 1) {
                     employees.remove(employee);
+                    if (alreadyInBlacklist) {
+                        blacklist.remove(employee);
+                    }                    
                     if (!fired) {
                         System.out.println(employee.name + " is leaving from branch: " + this.district + ".");
                     } else {
@@ -315,19 +329,23 @@ public class project2 {
         
         public void checkChanges() {
             // itarates through cashierPromotion and checks if any cashier can be promoted or lost their promotion
+            List<Employee> cashiersToRemove = new ArrayList<>();
             cashierPromotion.forEach((employee) -> {
                 if (employee.promotionPoints < 3) {
-                    cashierPromotion.remove(employee);
+                    cashiersToRemove.add(employee);
                 } else if (numCashiers > 1) {
                     promoteToCook(employee);
                 }
             });
+            cashierPromotion.removeAll(cashiersToRemove);
             // itarates through cookPromotion and checks if any cook can be promoted or lost their promotion
+            List<Employee> cooksToRemove = new ArrayList<>();
             cookPromotion.forEach((employee) -> {
                 if (employee.promotionPoints < 10) {
-                    cookPromotion.remove(employee);
+                    cooksToRemove.add(employee);
                 }
             });
+            cookPromotion.removeAll(cooksToRemove);
             // itarates through blacklist and removes employees from branch if possible
             blacklist.forEach((employee) -> {
                 removeEmployee(employee, true, true);
