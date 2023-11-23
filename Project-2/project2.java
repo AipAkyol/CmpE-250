@@ -9,11 +9,15 @@ import java.util.Queue;
 import java.util.Scanner;
 
 //TODO:!!!!! write the input and output format in the assignment escpicxally do not use ./
+//TODO: strip the input(check forum)
 
 public class project2 {
 
     public static void main(String[] args) throws FileNotFoundException {
         
+        //TODO: deletethis
+        double initialTime = System.currentTimeMillis();
+
         //if (args.length != 3) {
         //    System.err.println("Usage: java project2 <inputfile1> <inputfile2> <outputfile>");
         //    System.exit(1);
@@ -30,7 +34,7 @@ public class project2 {
         PrintStream printStream = new PrintStream(fileOutputStream);
         System.setOut(printStream);  // set system out to the file
         
-        File inputFile1 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\small_cases\\inputs/initial4.txt");
+        File inputFile1 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\large_cases_v3 (1)\\large_cases_v3\\input/large_initial5.txt");
         Scanner input1 = new Scanner(inputFile1);
 
         do {
@@ -40,7 +44,7 @@ public class project2 {
         
         input1.close();
         
-        File inputFile2 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\small_cases\\inputs/input4.txt");
+        File inputFile2 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\large_cases_v3 (1)\\large_cases_v3\\input/large5.txt");
         Scanner input2 = new Scanner(inputFile2);
         
         input2.nextLine(); // skip first line
@@ -54,16 +58,21 @@ public class project2 {
             } else {
                 executeinput2(branches, line);
             }
+            //System.out.println(line);
         } while (input2.hasNextLine());
 
         input2.close();
+
+        double finalTime = System.currentTimeMillis();
+
+        System.out.println("Total time elapsed: " + (finalTime - initialTime) / 1000 + " seconds.");
     }
 
     //TODO: rewrite sout of employee already exists
     public static void executeinput1(Hashtable<Branch> branches, String line) {
         String[] arr = line.split(", ");
         if (employeeAlreadyExists(branches, arr[0], arr[1], arr[2], arr[3])) {
-            System.out.println("Employee " + arr[2] + " already exists in branch " + arr[1] + ".");
+            System.out.println("Existing employee cannot be added again.");
             return;
         }
         branches.add(new Branch(arr[0], arr[1])).addEmployee((new Employee(arr[2], arr[3])));
@@ -74,25 +83,40 @@ public class project2 {
         String[] order = line.split(": ");
         String[] arr = order[1].split(", ");
         if (order[0].equals("PERFORMANCE_UPDATE")) {
+            //TODO remove this
+            //if (arr[2].equals("Abakan/Abakay Buyuk") && arr[3].equals("-531")) {
+            //    System.out.println("aip");
+            //}            
             if (!employeeAlreadyExists(branches, arr[0], arr[1], arr[2], "ARBITRARY_PROFESSION")) {
                 System.out.println("There is no such employee.");
                 return;
             }
+            //TODO: remove this
+            //if (arr[2].equals("Gaffar Dede") && arr[3].equals("1421")) {
+            //    System.out.println("aip");
+            //}
             branches.find(arr[0] + arr[1]).updatePerformance(branches.find(arr[0] + arr[1]).employees.find(arr[2]), Integer.parseInt(arr[3]));
             branches.find(arr[0] + arr[1]).checkChanges();
         } else if (order[0].equals("ADD")) {
+            //if (arr[2].equals("Edra Dede")) {
+            //    System.out.println("vs");
+            //}
+            //TODO: check
             if (employeeAlreadyExists(branches, arr[0], arr[1], arr[2], arr[3])) {
-                System.out.println("Employee " + arr[2] + " already exists in branch " + arr[1] + ".");
+                System.out.println("Existing employee cannot be added again.");
                 return;
             }
             branches.find(arr[0] + arr[1]).addEmployee(new Employee(arr[2], arr[3]));
             branches.find(arr[0] + arr[1]).checkChanges();
         } else if (order[0].equals("LEAVE")) {
+            //if (arr[2].equals("Baharnaz Cengiz")) {
+            //    System.out.println("vs");
+            //}
             if (!employeeAlreadyExists(branches, arr[0], arr[1], arr[2], "ARBITRARY_PROFESSION")) {
                 System.out.println("There is no such employee.");
                 return;
             }
-            branches.find(arr[0] + arr[1]).removeEmployee(branches.find(arr[0] + arr[1]).employees.find(arr[2]), false, false);
+            branches.find(arr[0] + arr[1]).removeEmployee(branches.find(arr[0] + arr[1]).employees.find(arr[2]), false);
             branches.find(arr[0] + arr[1]).checkChanges();
         } else if (order[0].equals("PRINT_MONTHLY_BONUSES")) {
             branches.find(arr[0] + arr[1]).printMonthlyBonuses();
@@ -178,13 +202,12 @@ public class project2 {
                 if (blacklist.contains(employee)) {
                     return;
                 } 
-                removeEmployee(employee, true, false);
+                removeEmployee(employee, true);
             } else {
                 checkPromotion(employee);
             }
         }
 
-        //TODO: write souts
         private void checkPromotion(Employee employee) {
             // checks if employee can be promoted
             if (employee.profession.equals("COOK")) {
@@ -210,9 +233,9 @@ public class project2 {
             }
         }
 
-        //TODO: write souts
-        public void removeEmployee(Employee employee, boolean fired, boolean alreadyInBlacklist) {
+        public void removeEmployee(Employee employee, boolean fired) {
             // removes employee from branch if possible       
+            boolean alreadyInBlacklist = blacklist.contains(employee);
             if (employee.profession.equals("MANAGER")) {
                 if (cookPromotion.size() > 0 && numCooks > 1) {
                         employees.remove(employee);
@@ -241,6 +264,9 @@ public class project2 {
                     if (alreadyInBlacklist) {
                         blacklist.remove(employee);
                     }
+                    if (cookPromotion.contains(employee)) {
+                        cookPromotion.remove(employee);
+                    }
                     employees.remove(employee);
                     if (!fired) {
                         System.out.println(employee.name + " is leaving from branch: " + this.district + ".");
@@ -263,7 +289,10 @@ public class project2 {
                 if (numCashiers > 1) {
                     if (alreadyInBlacklist) {
                         blacklist.remove(employee);
-                    }                    
+                    }                
+                    if (cashierPromotion.contains(employee)) {
+                        cashierPromotion.remove(employee);
+                    }    
                     employees.remove(employee);
                     if (!fired) {
                         System.out.println(employee.name + " is leaving from branch: " + this.district + ".");
@@ -322,6 +351,9 @@ public class project2 {
             employee.profession = "COOK";
             System.out.println(employee.name + " is promoted from Cashier to Cook.");
             employee.promotionPoints -= 3;
+            if (employee.promotionPoints >= 10 && !cookPromotion.contains(employee)) {
+                cookPromotion.add(employee);
+            }
             numCashiers--;
             numCooks++;
             cashierPromotion.remove(employee);
@@ -347,9 +379,15 @@ public class project2 {
             });
             cookPromotion.removeAll(cooksToRemove);
             // itarates through blacklist and removes employees from branch if possible
+            List<Employee> noLongerObserved = new ArrayList<>();
             blacklist.forEach((employee) -> {
-                removeEmployee(employee, true, true);
+                if (employee.promotionPoints > -5) {
+                    noLongerObserved.add(employee);
+                } else {
+                    removeEmployee(employee, true);
+                }
             });
+            blacklist.removeAll(noLongerObserved);
         }
 
         public void addEmployee(Employee employee) {
@@ -516,7 +554,7 @@ public class project2 {
         }
 
         public int getSize() {
-            // returns size of hashtable
+            // returns filled size of hashtable
             return size;
         }
 

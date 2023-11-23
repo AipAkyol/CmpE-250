@@ -3,7 +3,7 @@ public class temp {
         //System.out.println(hashCode("call"));
         //int[] arr = {-1, 2, 3, -4, 5};
         //System.out.println(max_subarray(arr));
-        System.out.println(-456 / 200);
+        System.out.println(hash("Cannur Aktas"));
     }
 
     public static int hashCode(String str) {
@@ -23,5 +23,15 @@ public class temp {
         return max_sum;
     }
 
-    
+    private static int hash(String input) {
+        int hash = 0;
+        for (int i = 0; i < input.length(); i++) {
+            hash = (hash * 31 + input.charAt(i));
+        }
+        int index = hash % 223;
+        if (index < 0) {
+            index += 223;
+        }
+        return index;
+    }
 }
