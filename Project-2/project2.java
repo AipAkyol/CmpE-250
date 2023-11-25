@@ -8,33 +8,29 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
-//TODO:!!!!! write the input and output format in the assignment escpicxally do not use ./
-//TODO: strip the input(check forum)
 
+@SuppressWarnings("unchecked")
 public class project2 {
 
     public static void main(String[] args) throws FileNotFoundException {
-        
-        //TODO: deletethis
-        double initialTime = System.currentTimeMillis();
 
-        //if (args.length != 3) {
-        //    System.err.println("Usage: java project2 <inputfile1> <inputfile2> <outputfile>");
-        //    System.exit(1);
-        //}
+        if (args.length != 3) {
+            System.err.println("Usage: java project2 <inputfile1> <inputfile2> <outputfile>");
+            System.exit(1);
+        }
         
         Hashtable<Branch> branches = new Hashtable<Branch>();
         
-        //String inputFile1Name = args[0];
-        //String inputFile2Name = args[1];
-        //String outputFileName = args[2];
+        String inputFile1Name = args[0];
+        String inputFile2Name = args[1];
+        String outputFileName = args[2];
         
-        File outputFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2/output.txt");
+        File outputFile = new File(outputFileName);
         FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
         PrintStream printStream = new PrintStream(fileOutputStream);
         System.setOut(printStream);  // set system out to the file
         
-        File inputFile1 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\large_cases_v3 (1)\\large_cases_v3\\input/large_initial5.txt");
+        File inputFile1 = new File(inputFile1Name);
         Scanner input1 = new Scanner(inputFile1);
 
         do {
@@ -44,7 +40,7 @@ public class project2 {
         
         input1.close();
         
-        File inputFile2 = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-2\\large_cases_v3 (1)\\large_cases_v3\\input/large5.txt");
+        File inputFile2 = new File(inputFile2Name);
         Scanner input2 = new Scanner(inputFile2);
         
         input2.nextLine(); // skip first line
@@ -58,72 +54,50 @@ public class project2 {
             } else {
                 executeinput2(branches, line);
             }
-            //System.out.println(line);
         } while (input2.hasNextLine());
 
         input2.close();
-
-        double finalTime = System.currentTimeMillis();
-
-        System.out.println("Total time elapsed: " + (finalTime - initialTime) / 1000 + " seconds.");
     }
 
-    //TODO: rewrite sout of employee already exists
     public static void executeinput1(Hashtable<Branch> branches, String line) {
         String[] arr = line.split(", ");
-        if (employeeAlreadyExists(branches, arr[0], arr[1], arr[2], arr[3])) {
+        if (employeeAlreadyExists(branches, arr[0].strip(), arr[1].strip(), arr[2].strip(), "ARBITRARY_PROFESSION")) {
             System.out.println("Existing employee cannot be added again.");
             return;
         }
-        branches.add(new Branch(arr[0], arr[1])).addEmployee((new Employee(arr[2], arr[3])));
+        branches.add(new Branch(arr[0].strip(), arr[1].strip())).addEmployee(new Employee(arr[2].strip(), arr[3].strip()));
     }
 
-    //TODO: CHECK CHANGES
     public static void executeinput2(Hashtable<Branch> branches, String line) {
         String[] order = line.split(": ");
         String[] arr = order[1].split(", ");
-        if (order[0].equals("PERFORMANCE_UPDATE")) {
-            //TODO remove this
-            //if (arr[2].equals("Abakan/Abakay Buyuk") && arr[3].equals("-531")) {
-            //    System.out.println("aip");
-            //}            
-            if (!employeeAlreadyExists(branches, arr[0], arr[1], arr[2], "ARBITRARY_PROFESSION")) {
+        if (order[0].strip().equals("PERFORMANCE_UPDATE")) {      
+            if (!employeeAlreadyExists(branches, arr[0].strip(), arr[1].strip(), arr[2].strip(), "ARBITRARY_PROFESSION")) {
                 System.out.println("There is no such employee.");
                 return;
             }
-            //TODO: remove this
-            //if (arr[2].equals("Gaffar Dede") && arr[3].equals("1421")) {
-            //    System.out.println("aip");
-            //}
-            branches.find(arr[0] + arr[1]).updatePerformance(branches.find(arr[0] + arr[1]).employees.find(arr[2]), Integer.parseInt(arr[3]));
-            branches.find(arr[0] + arr[1]).checkChanges();
-        } else if (order[0].equals("ADD")) {
-            //if (arr[2].equals("Edra Dede")) {
-            //    System.out.println("vs");
-            //}
-            //TODO: check
-            if (employeeAlreadyExists(branches, arr[0], arr[1], arr[2], arr[3])) {
+            branches.find(arr[0].strip() + arr[1].strip()).updatePerformance(branches.find(arr[0].strip() + arr[1].strip()).employees.find(arr[2].strip()), Integer.parseInt(arr[3].strip()));
+            branches.find(arr[0].strip() + arr[1].strip()).checkChanges();
+        } else if (order[0].strip().equals("ADD")) {
+            if (employeeAlreadyExists(branches, arr[0].strip(), arr[1].strip(), arr[2].strip(), arr[3].strip())) {
                 System.out.println("Existing employee cannot be added again.");
                 return;
             }
-            branches.find(arr[0] + arr[1]).addEmployee(new Employee(arr[2], arr[3]));
-            branches.find(arr[0] + arr[1]).checkChanges();
-        } else if (order[0].equals("LEAVE")) {
-            //if (arr[2].equals("Baharnaz Cengiz")) {
-            //    System.out.println("vs");
-            //}
-            if (!employeeAlreadyExists(branches, arr[0], arr[1], arr[2], "ARBITRARY_PROFESSION")) {
+            branches.find(arr[0].strip() + arr[1].strip()).addEmployee(new Employee(arr[2].strip(), arr[3].strip()));
+            branches.find(arr[0].strip() + arr[1].strip()).checkChanges();
+        } else if (order[0].strip().equals("LEAVE")) {
+            if (!employeeAlreadyExists(branches, arr[0].strip(), arr[1].strip(), arr[2].strip(), "ARBITRARY_PROFESSION")) {
                 System.out.println("There is no such employee.");
                 return;
             }
-            branches.find(arr[0] + arr[1]).removeEmployee(branches.find(arr[0] + arr[1]).employees.find(arr[2]), false);
-            branches.find(arr[0] + arr[1]).checkChanges();
-        } else if (order[0].equals("PRINT_MONTHLY_BONUSES")) {
-            branches.find(arr[0] + arr[1]).printMonthlyBonuses();
-        } else if (order[0].equals("PRINT_OVERALL_BONUSES")) {
-            branches.find(arr[0] + arr[1]).printOverallBonuses();
-        } else if (order[0].equals("PRINT_MANAGER")) {
-            branches.find(arr[0] + arr[1]).printManager();
+            branches.find(arr[0].strip() + arr[1].strip()).removeEmployee(branches.find(arr[0] + arr[1]).employees.find(arr[2]), false);
+            branches.find(arr[0].strip() + arr[1].strip()).checkChanges();
+        } else if (order[0].strip().equals("PRINT_MONTHLY_BONUSES")) {
+            branches.find(arr[0].strip() + arr[1].strip()).printMonthlyBonuses();
+        } else if (order[0].strip().equals("PRINT_OVERALL_BONUSES")) {
+            branches.find(arr[0].strip() + arr[1].strip()).printOverallBonuses();
+        } else if (order[0].strip().equals("PRINT_MANAGER")) {
+            branches.find(arr[0].strip() + arr[1].strip()).printManager();
         } else {
             throw new RuntimeException("Error in executeinput2 method");
         }   
@@ -469,15 +443,9 @@ public class project2 {
             size = 0;
         }
 
-
-        //TODO: containss ile cift itarate optimizsasyonu yap gerekirse , override gerekir mi
-        //TODO: fixed, but keep an eye on it
         public E add(E input) {
             // adds input to hashtable
             int index = hash(input.toString()) % table.length;
-            if (index < 0) {
-                index += table.length;
-            }
             if (table[index] == null) {
                 table[index] = new LinkedList<E>();
                 table[index].add(input);
@@ -513,7 +481,6 @@ public class project2 {
             return null;
         }
 
-        //TODO: check bugs
         public void rehash() {
             // rehashes all the linked lists in the hashtable
             LinkedList<E>[] temp = table;
@@ -558,7 +525,6 @@ public class project2 {
             return size;
         }
 
-        //TODO: son 3 ilk 3
         private int hash(String input) {
             int hash = 0;
             for (int i = 0; i < input.length(); i++) {
