@@ -31,6 +31,7 @@ public class Project3 {
         MergeSort.sortSongs(songDatabase);
         long finalTime = System.currentTimeMillis();
         System.out.println("Merge Sort: " + (finalTime - initialTime) + " ms");
+        testSortSongs();
 
         /* 
         // TODO: check starting sizes
@@ -128,6 +129,43 @@ public class Project3 {
             System.out.println(heap.remove().scores[0]);
         }*/
 
+    }
+
+    // TODO: remove
+    public static void testSortSongs() {
+        // Create an array of songs
+        Song[] songs = new Song[] {
+            new Song(0,"abcde", 1000, new int[]{0, 0, 0}, 0, false),
+            new Song(1,"abcda", 1000, new int[]{0, 0, 0}, 0, false),
+            new Song(2,"abc", 2000, new int[]{0, 0, 0}, 0, false),
+            new Song(3,"abcdaasd", 2000, new int[]{0, 0, 0}, 0, false),
+            new Song(4,"abcde", 4000, new int[]{0, 0, 0}, 0, false),
+            new Song(5,"abcdb", 5000, new int[]{0, 0, 0}, 0, false),
+            new Song(6,"abcde", 2000, new int[]{0, 0, 0}, 0, false),
+            new Song(7,"abcdb", 5000, new int[]{0, 0, 0}, 0, false),
+            new Song(8,"abcde", 4000, new int[]{0, 0, 0}, 0, false),
+            new Song(9,"abcdb", 5000, new int[]{0, 0, 0}, 0, false),
+            new Song(10,"abcde", 4000, new int[]{0, 0, 0}, 0, false),
+            new Song(11,"abcdb", 5000, new int[]{0, 0, 0}, 0, false),
+
+        };
+    
+        // Sort the songs
+        MergeSort.sortSongs(songs);
+    
+        // Check that the songs are sorted by playCount
+        for (int i = 0; i < songs.length - 1; i++) {
+            assert songs[i].playCount <= songs[i + 1].playCount : "Songs are not sorted by playCount";
+        }
+    
+        // Check that songs with the same playCount are sorted by name
+        for (int i = 0; i < songs.length - 1; i++) {
+            if (songs[i].playCount == songs[i + 1].playCount) {
+                assert songs[i].name.compareTo(songs[i + 1].name) <= 0 : "Songs with the same playCount are not sorted by name";
+            }
+        }
+    
+        System.out.println("All tests passed!");
     }
 
     //TODO: checklater
@@ -304,9 +342,11 @@ public class Project3 {
         }
 
         public static void sortSongs(Song[] array){
-            radixSortByName(array, 5);
+            radixSortByName(array, findLongestNameLength(array));
             countingSortByPlayCount(array, 10000);
-            
+            countingSortByHeartache(array, 100);
+            countingSortByRoadTrip(array, 100);
+            countingSortByBlissful(array, 100);
         }
         
         public static void countingSortByPlayCount(Song[] array, int maxPlayCount){
@@ -323,7 +363,54 @@ public class Project3 {
             }
             System.arraycopy(output, 0, array, 0, array.length);
         }
+
+        public static void countingSortByHeartache(Song[] array, int maxHeartache){
+            Song[] output = new Song[array.length];
+            int[] count = new int[maxHeartache + 1];
+            for(Song song : array){
+                count[song.scores[0]]++;
+            }
+            for(int i = 1; i <= maxHeartache; i++){
+                count[i] += count[i - 1];
+            }
+            for(int i = array.length - 1; i >= 0; i--){
+                output[--count[array[i].scores[0]]] = array[i];
+            }
+            System.arraycopy(output, 0, array, 0, array.length);
+        }
         
+        public static void countingSortByRoadTrip(Song[] array, int maxRoadTrip){
+            Song[] output = new Song[array.length];
+            int[] count = new int[maxRoadTrip + 1];
+            for(Song song : array){
+                count[song.scores[1]]++;
+            }
+            for(int i = 1; i <= maxRoadTrip; i++){
+                count[i] += count[i - 1];
+            }
+            for(int i = array.length - 1; i >= 0; i--){
+                output[--count[array[i].scores[1]]] = array[i];
+            }
+            System.arraycopy(output, 0, array, 0, array.length);
+        }
+        
+        public static void countingSortByBlissful(Song[] array, int maxBlissful){
+            Song[] output = new Song[array.length];
+            int[] count = new int[maxBlissful + 1];
+            for(Song song : array){
+                count[song.scores[2]]++;
+            }
+            for(int i = 1; i <= maxBlissful; i++){
+                count[i] += count[i - 1];
+            }
+            for(int i = array.length - 1; i >= 0; i--){
+                output[--count[array[i].scores[2]]] = array[i];
+            }
+            System.arraycopy(output, 0, array, 0, array.length);
+        }
+        
+        
+        /* 
         public static void radixSortByName(Song[] array, int nameLength){
             for(int exp = nameLength - 1; exp >= 0; exp--){
                 countingSortByName(array, exp);
@@ -342,6 +429,51 @@ public class Project3 {
             }
             for(int i = array.length - 1; i >= 0; i--){
                 int index = array[i].name.charAt(exp) - 'a' + 1;
+                output[--count[index]] = array[i];
+            }
+            System.arraycopy(output, 0, array, 0, array.length);
+        }*/
+
+        public static int findLongestNameLength(Song[] array){
+            int maxLength = 0;
+            for(Song song : array){
+                if(song.name.length() > maxLength){
+                    maxLength = song.name.length();
+                }
+            }
+            return maxLength;
+        }
+
+        public static void radixSortByName(Song[] array, int nameLength){
+            for(int exp = nameLength - 1; exp >= 0; exp--){
+                countingSortByName(array, exp);
+            }
+        }
+        
+        public static void countingSortByName(Song[] array, int exp){
+            Song[] output = new Song[array.length];
+            int[] count = new int[53]; // 26 lowercase + 26 uppercase + 1 for shorter names
+            for(Song song : array){
+                int index;
+                if(song.name.length() > exp){
+                    char c = song.name.charAt(exp);
+                    index = (c >= 'a' && c <= 'z') ? c - 'a' + 1 : c - 'A' + 27;
+                } else {
+                    index = 0; // Use 0 for songs with names shorter than exp
+                }
+                count[index]++;
+            }
+            for(int i = 1; i < 53; i++){
+                count[i] += count[i - 1];
+            }
+            for(int i = array.length - 1; i >= 0; i--){
+                int index;
+                if(array[i].name.length() > exp){
+                    char c = array[i].name.charAt(exp);
+                    index = (c >= 'a' && c <= 'z') ? c - 'a' + 1 : c - 'A' + 27;
+                } else {
+                    index = 0;
+                }
                 output[--count[index]] = array[i];
             }
             System.arraycopy(output, 0, array, 0, array.length);
