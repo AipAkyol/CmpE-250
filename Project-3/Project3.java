@@ -12,7 +12,7 @@ public class Project3 {
         File songFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\test-cases\\songs.txt");
         Scanner songScanner = new Scanner(songFile);
         
-        Song[] songDatabase = new Song[Integer.parseInt(songScanner.nextLine()) + 1];
+        Song[] songDatabase = new Song[Integer.parseInt(songScanner.nextLine())];
         
         while (songScanner.hasNextLine()) {
             String[] songInfo = songScanner.nextLine().split(" ");
@@ -23,15 +23,43 @@ public class Project3 {
             for (int i = 0; i < 3; i++) {
                 scores[i] = Integer.parseInt(songInfo[3 + i]);
             }
-            songDatabase[id] = new Song(id, name, playCount, scores, false);
+            songDatabase[id-1] = new Song(id, name, playCount, scores, false); // id starts from 1 but index starts from 0 so use id-1
         }
-        songDatabase[0] = new Song(0, "aaaaa", 0, new int[]{0, 0, 0}, false); // dummy node
         songScanner.close();
         long initialTime = System.currentTimeMillis();
-        MergeSort.sortSongs(songDatabase);
+        Song[] sortedSongsbyPlayCount = new Song[songDatabase.length];
+        Song[] sortedSongsbyHeartache = new Song[songDatabase.length];
+        Song[] sortedSongsbyRoadTrip = new Song[songDatabase.length];
+        Song[] sortedSongsbyBlissful = new Song[songDatabase.length]; 
+        System.arraycopy(songDatabase, 0, sortedSongsbyPlayCount, 0, songDatabase.length);
+        MergeSort.radixSortByName(sortedSongsbyPlayCount, MergeSort.findLongestNameLength(sortedSongsbyPlayCount));
+        System.arraycopy(sortedSongsbyPlayCount, 0, sortedSongsbyHeartache, 0, songDatabase.length); //namely sorted
+        System.arraycopy(sortedSongsbyPlayCount, 0, sortedSongsbyRoadTrip, 0, songDatabase.length); //namely sorted
+        System.arraycopy(sortedSongsbyPlayCount, 0, sortedSongsbyBlissful, 0, songDatabase.length); //namely sorted
+        MergeSort.countingSortByPlayCount(sortedSongsbyPlayCount, 10000);
+        MergeSort.countingSortByHeartache(sortedSongsbyHeartache, 100);
+        MergeSort.countingSortByRoadTrip(sortedSongsbyRoadTrip, 100);
+        MergeSort.countingSortByBlissful(sortedSongsbyBlissful, 100);
         long finalTime = System.currentTimeMillis();
         System.out.println("Merge Sort: " + (finalTime - initialTime) + " ms");
-        testSortSongs();
+        //testSortSongs();
+
+        /*for (int i = 0; i < songDatabase.length; i++) {
+            //if (i%2 == 0) {
+                songDatabase[i].playlistId = 1;
+            //}
+        }
+        int a;
+        long initialTime2 = System.nanoTime();
+        for(int i = 0; i < 1000000; i++){
+            for(int j = 0; j < songDatabase.length; j++){
+                if (songDatabase[j].playlistId > 0) {
+                    a=1;
+                }
+            }
+        }
+        long finalTime2 = System.nanoTime();
+        System.out.println("Linear Search: " + (finalTime2 - initialTime2) + " ns");*/
 
         /* 
         // TODO: check starting sizes
@@ -130,7 +158,7 @@ public class Project3 {
         }*/
 
     }
-
+/* 
     // TODO: remove
     public static void testSortSongs() {
         // Create an array of songs
@@ -167,7 +195,7 @@ public class Project3 {
     
         System.out.println("All tests passed!");
     }
-
+*/
     //TODO: checklater
     public Song[] hashtableToSongArray(Hashtable hashtable, Song[] songDatabase){
         Song[] array = new Song[hashtable.size];
@@ -246,7 +274,7 @@ public class Project3 {
                 index++;
             }
         }
-
+/* 
         //chech namehash in case of equal playcounts
         public static void radixSort(Song[] array){
             // First sort by nameHash using binary radix sort
@@ -274,7 +302,8 @@ public class Project3 {
                 array[i] = output[i];
             }
         }
-
+*/
+        /* 
         public static void binaryRadixSort(Song[] array, int left, int right, int bit){
             if(right <= left || bit < 0){
                 return;
@@ -297,7 +326,8 @@ public class Project3 {
             binaryRadixSort(array, left, i - 1, bit - 1);
             binaryRadixSort(array, i, right, bit - 1);
         }
-
+*/
+        /* 
         public static void mergeSortbyName(Song[] array, int low, int high){
             if(low < high){
                 int mid = (low + high) / 2;
@@ -336,18 +366,18 @@ public class Project3 {
                 index++;
             }
         }
-
+*/
         public static void sort(Song[] array){
             sort(array, 0, array.length - 1);
         }
 
-        public static void sortSongs(Song[] array){
+        /*public static void sortSongs(Song[] array){
             radixSortByName(array, findLongestNameLength(array));
-            countingSortByPlayCount(array, 10000);
+            //countingSortByPlayCount(array, 10000);
             countingSortByHeartache(array, 100);
-            countingSortByRoadTrip(array, 100);
-            countingSortByBlissful(array, 100);
-        }
+            //countingSortByRoadTrip(array, 100);
+            //countingSortByBlissful(array, 100);
+        }*/
         
         public static void countingSortByPlayCount(Song[] array, int maxPlayCount){
             Song[] output = new Song[array.length];
@@ -466,7 +496,7 @@ public class Project3 {
             for(int i = 1; i < 53; i++){
                 count[i] += count[i - 1];
             }
-            for(int i = array.length - 1; i >= 0; i--){
+            for(int i = 0; i < array.length; i++){
                 int index;
                 if(array[i].name.length() > exp){
                     char c = array[i].name.charAt(exp);
@@ -474,10 +504,11 @@ public class Project3 {
                 } else {
                     index = 0;
                 }
-                output[--count[index]] = array[i];
+                output[array.length - count[index]] = array[i];
+                count[index]--;
             }
             System.arraycopy(output, 0, array, 0, array.length);
-        }
+        }    
     }
 
     //TODO: voide don
@@ -815,7 +846,7 @@ public class Project3 {
         int[] scores; // [heartache, roadtrip, blissful]
         int playlistId;
         boolean inBlend;
-        int nameHash;
+        //int nameHash;
 
         public Song(){
             this.id = 0;
@@ -824,7 +855,7 @@ public class Project3 {
             this.playCount = 0;
             this.name = "";
             this.inBlend = false;
-            this.nameHash = 0;
+            //this.nameHash = 0;
         }
 
         public Song(int id, String name, int playCount, int[] scores, boolean inBlend){
@@ -834,7 +865,7 @@ public class Project3 {
             this.scores = scores;
             this.playlistId = 0;
             this.inBlend = inBlend;
-            this.nameHash = computeValue(name);
+            //this.nameHash = computeValue(name);
         }
 
         public Song(int id, String name, int playCount, int[] scores, int playlistId, boolean inBlend){
@@ -844,21 +875,21 @@ public class Project3 {
             this.scores = scores;
             this.playlistId = playlistId;
             this.inBlend = inBlend;
-            this.nameHash = computeValue(name);
+            //this.nameHash = computeValue(name);
         }
 
-        public static int computeValue(String s) {
+        /*public static int computeValue(String s) {
             int value = 0;
             for (char c : s.toCharArray()) {
                 value = value * 26 + (c - 'a' + 1);
             }
             return value;
-        }
+        }*/
 
         
     }
 
-    public static class StringComparator {
+    /*public static class StringComparator {
         public static boolean fastStringCompare(String str1, String str2) {
             for (int i = 0; i < 5; i++) {
                 if (str1.charAt(i) < str2.charAt(i)) {
@@ -867,5 +898,5 @@ public class Project3 {
             }
             return true;
         }
-    }
+    }*/
 }
