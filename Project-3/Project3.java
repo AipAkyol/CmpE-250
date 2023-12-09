@@ -9,7 +9,7 @@ import java.io.FileNotFoundException;
 public class Project3 {
     public static void main(String[] args) throws FileNotFoundException {
         
-        File songFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\test-cases\\songs.txt");
+        File songFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\sample-test-cases\\songs.txt");
         Scanner songScanner = new Scanner(songFile);
         
         Song[] songDatabase = new Song[Integer.parseInt(songScanner.nextLine())];
@@ -23,25 +23,32 @@ public class Project3 {
             for (int i = 0; i < 3; i++) {
                 scores[i] = Integer.parseInt(songInfo[3 + i]);
             }
-            songDatabase[id-1] = new Song(id, name, playCount, scores, false); // id starts from 1 but index starts from 0 so use id-1
+            songDatabase[id-1] = new Song(id, name, playCount, scores); // id starts from 1 but index starts from 0 so use id-1
         }
         songScanner.close();
         long initialTime = System.currentTimeMillis();
-        Song[] sortedSongsbyPlayCount = new Song[songDatabase.length];
+        InfoDatabase infoDatabase = new InfoDatabase(songDatabase.length);
+        /*Song[] sortedSongsbyPlayCount = new Song[songDatabase.length];
         Song[] sortedSongsbyHeartache = new Song[songDatabase.length];
         Song[] sortedSongsbyRoadTrip = new Song[songDatabase.length];
-        Song[] sortedSongsbyBlissful = new Song[songDatabase.length]; 
-        System.arraycopy(songDatabase, 0, sortedSongsbyPlayCount, 0, songDatabase.length);
-        MergeSort.radixSortByName(sortedSongsbyPlayCount, MergeSort.findLongestNameLength(sortedSongsbyPlayCount));
-        System.arraycopy(sortedSongsbyPlayCount, 0, sortedSongsbyHeartache, 0, songDatabase.length); //namely sorted
-        System.arraycopy(sortedSongsbyPlayCount, 0, sortedSongsbyRoadTrip, 0, songDatabase.length); //namely sorted
-        System.arraycopy(sortedSongsbyPlayCount, 0, sortedSongsbyBlissful, 0, songDatabase.length); //namely sorted
-        MergeSort.countingSortByPlayCount(sortedSongsbyPlayCount, 10000);
-        MergeSort.countingSortByHeartache(sortedSongsbyHeartache, 100);
-        MergeSort.countingSortByRoadTrip(sortedSongsbyRoadTrip, 100);
-        MergeSort.countingSortByBlissful(sortedSongsbyBlissful, 100);
+        Song[] sortedSongsbyBlissful = new Song[songDatabase.length]; */
+        System.arraycopy(songDatabase, 0, infoDatabase.sortedSongsbyPlayCount, 0, songDatabase.length);
+        MergeSort.radixSortByName(infoDatabase.sortedSongsbyPlayCount, MergeSort.findLongestNameLength(songDatabase)); //TODO: be careful
+        System.arraycopy(infoDatabase.sortedSongsbyPlayCount, 0, infoDatabase.sortedSongsbyHeartache, 0, songDatabase.length); //namely sorted
+        System.arraycopy(infoDatabase.sortedSongsbyPlayCount, 0, infoDatabase.sortedSongsbyRoadTrip, 0, songDatabase.length); //namely sorted
+        System.arraycopy(infoDatabase.sortedSongsbyPlayCount, 0, infoDatabase.sortedSongsbyBlissful, 0, songDatabase.length); //namely sorted
+        MergeSort.countingSortByPlayCount(infoDatabase.sortedSongsbyPlayCount, 10000);
+        MergeSort.countingSortByHeartache(infoDatabase.sortedSongsbyHeartache, 100);
+        MergeSort.countingSortByRoadTrip(infoDatabase.sortedSongsbyRoadTrip, 100);
+        MergeSort.countingSortByBlissful(infoDatabase.sortedSongsbyBlissful, 100);
         long finalTime = System.currentTimeMillis();
         System.out.println("Merge Sort: " + (finalTime - initialTime) + " ms");
+
+        for (int i = 0; i < songDatabase.length; i++) {
+            infoDatabase.sortedSongsbyHeartache[i].heartacheAIP = i;
+            infoDatabase.sortedSongsbyRoadTrip[i].roadtripAIP = i;
+            infoDatabase.sortedSongsbyBlissful[i].blissfulAIP = i;
+        }
         //testSortSongs();
 
         /*for (int i = 0; i < songDatabase.length; i++) {
@@ -67,23 +74,21 @@ public class Project3 {
         MaxHeap roadtripHeap = new MaxHeap(100, 1);
         MaxHeap blissfulHeap = new MaxHeap(100, 2);
         */
-        /* 
+        
         File inputFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\sample-test-cases\\inputs\\sample_0.txt");
         Scanner inputScanner = new Scanner(inputFile);
 
         String[] limits = inputScanner.nextLine().split(" ");
-        final int LIMIT_PLAYLIST = Integer.parseInt(limits[0]);
-        final int LIMIT_HEARTACHE = Integer.parseInt(limits[1]);
-        final int LIMIT_ROADTRIP = Integer.parseInt(limits[2]);
-        final int LIMIT_BLISSFUL = Integer.parseInt(limits[3]);
+        infoDatabase.limitPlaylist = Integer.parseInt(limits[0]);
+        infoDatabase.limitHeartache = Integer.parseInt(limits[1]);
+        infoDatabase.limitRoadtrip = Integer.parseInt(limits[2]);
+        infoDatabase.limitBlissful = Integer.parseInt(limits[3]);
 
         final int PLAYLIST_COUNT = Integer.parseInt(inputScanner.nextLine());
         //int[] playlistContribitionCounts = new int[PLAYLIST_COUNT + 1];
 
-        Playlist[] playlists = new Playlist[PLAYLIST_COUNT + 1];
+        Playlist[] playlists = new Playlist[PLAYLIST_COUNT + 1]; //note that playlist id starts from 1 and index 0 is null
 
-        
-        
         //TODO: playlist sizeları dırektolarak atladım
         for (int i = 1; i < PLAYLIST_COUNT + 1; i++) {
             inputScanner.nextLine();
@@ -91,16 +96,19 @@ public class Project3 {
             String[] playlistSongs = inputScanner.nextLine().split(" ");
             for (int j = 0; j < playlistSongs.length; j++) {
                 int songId = Integer.parseInt(playlistSongs[j]);
-                songDatabase[songId].playlistId = i;
-                playlists[i].notInBlendHeartache.insert(songDatabase[songId]);
+                songDatabase[songId - 1].playlistId = i;
+                /*playlists[i].notInBlendHeartache.insert(songDatabase[songId]);
                 playlists[i].notInBlendRoadtrip.insert(songDatabase[songId]);
                 playlists[i].notInBlendBlissful.insert(songDatabase[songId]);
                 heartacheHeap.insert(songDatabase[songId]);
                 roadtripHeap.insert(songDatabase[songId]);
-                blissfulHeap.insert(songDatabase[songId]);
+                blissfulHeap.insert(songDatabase[songId]);*/
             }
         }
-        */
+        
+
+
+        inputScanner.close();
 
         /* 
         //build the initial epic blend
@@ -122,26 +130,6 @@ public class Project3 {
 
         System.out.println("Heartache Heap");
 
-        
-        /*  
-        // test if sort runs well in more than 2 duplicates
-        Song[] test = new Song[6];
-        test[0] = new Song(0, "a", 0, new int[]{0, 0, 0}, 0, false);
-        test[1] = new Song(1, "a", 0, new int[]{0, 0, 0}, 0, false);
-        test[2] = new Song(2, "d", 2, new int[]{0, 0, 0}, 0, false);
-        test[3] = new Song(3, "c", 0, new int[]{0, 0, 0}, 0, false);
-        test[4] = new Song(4, "a", 0, new int[]{0, 0, 0}, 0, false);
-        test[5] = new Song(5, "a", 0, new int[]{0, 0, 0}, 0, false);
-        MergeSort.sort(test);
-        for (int i = 0; i < test.length; i++) {
-            if (i < test.length - 1) {
-                if (test[i+1].name == test[i].name) {
-                    continue;
-                }
-            }
-            System.out.println(test[i].name);
-        }
-        */
 
 
         
@@ -156,6 +144,16 @@ public class Project3 {
             }
             System.out.println(heap.remove().scores[0]);
         }*/
+
+    }
+
+    //TODO: yavas olursa info database iptalet
+    public static void addSong(int songId, Song[] songDatabase, Playlist[] playlists, InfoDatabase infoDatabase, boolean isEvent) {
+        
+        final int SONG_INDEX = songId - 1;  //TODO:for safety gerekirse sil
+        final int PLAYLIST_ID = songDatabase[SONG_INDEX].playlistId;
+
+
 
     }
 /* 
@@ -223,6 +221,29 @@ public class Project3 {
             this.blissfulSongs = new MinHeap(100, 2);
         }
             
+    }
+
+    public static class InfoDatabase {
+        public Song[] sortedSongsbyPlayCount;
+        public Song[] sortedSongsbyHeartache;
+        public Song[] sortedSongsbyRoadTrip;
+        public Song[] sortedSongsbyBlissful;
+
+        int limitPlaylist;
+        int limitHeartache;
+        int limitRoadtrip;
+        int limitBlissful;
+
+        public InfoDatabase(int songDatabaseSize) {
+            sortedSongsbyPlayCount = new Song[songDatabaseSize];
+            sortedSongsbyHeartache = new Song[songDatabaseSize];
+            sortedSongsbyRoadTrip = new Song[songDatabaseSize];
+            sortedSongsbyBlissful = new Song[songDatabaseSize];
+            limitPlaylist = 0;
+            limitHeartache = 0;
+            limitRoadtrip = 0;
+            limitBlissful = 0;
+        } 
     }
 
     //TODO: nameler uniqmi
@@ -627,21 +648,21 @@ public class Project3 {
             this.heap = new Song[100];
             this.size = 0;
             this.scoreIndex = 0;
-            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0, false)); // dummy node
+            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0)); // dummy node
         }
 
         public MaxHeap(int size){
             this.heap = new Song[size];
             this.size = 0;
             this.scoreIndex = 0;
-            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0, false)); // dummy node
+            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0)); // dummy node
         }
 
         public MaxHeap(int size, int scoreIndex){
             this.heap = new Song[size];
             this.size = 0;
             this.scoreIndex = scoreIndex;
-            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0, false)); // dummy node
+            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0)); // dummy node
         }
 
         public void insert(Song song){
@@ -727,21 +748,21 @@ public class Project3 {
             this.heap = new Song[100];
             this.size = 0;
             this.scoreIndex = 0;
-            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0, false)); // dummy node
+            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0)); // dummy node
         }
 
         public MinHeap(int size){
             this.heap = new Song[size];
             this.size = 0;
             this.scoreIndex = 0;
-            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0, false)); // dummy node
+            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0)); // dummy node
         }
 
         public MinHeap(int size, int scoreIndex){
             this.heap = new Song[size];
             this.size = 0;
             this.scoreIndex = scoreIndex;
-            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0, false)); // dummy node
+            this.insert(new Song(0, "", 0, new int[]{0, 0, 0}, 0)); // dummy node
         }
 
         public void insert(Song song){
@@ -818,7 +839,7 @@ public class Project3 {
     }
 
     public static class Playlist {
-        MaxHeap notInBlendHeartache;
+        /*MaxHeap notInBlendHeartache;
         MinHeap inBlendHeartache;
         MaxHeap notInBlendRoadtrip;
         MinHeap inBlendRoadtrip;
@@ -835,8 +856,29 @@ public class Project3 {
             this.inBlendBlissful = new MinHeap(100, 2);
             this.songContributionCount = 0;
         }
+        */
 
+        int notInBlendHeartacheMax;
+        int notInBlendRoadtripMax;
+        int notInBlendBlissfulMax;
+        int inBlendHeartacheMin;
+        int inBlendRoadtripMin;
+        int inBlendBlissfulMin;
+        int HeartacheContributionCount;
+        int RoadtripContributionCount;
+        int BlissfulContributionCount;
 
+        public Playlist(){
+            this.notInBlendHeartacheMax = -1;
+            this.notInBlendRoadtripMax = -1;
+            this.notInBlendBlissfulMax = -1;
+            this.inBlendHeartacheMin = -1;
+            this.inBlendRoadtripMin = -1;
+            this.inBlendBlissfulMin = -1;
+            this.HeartacheContributionCount = 0;
+            this.RoadtripContributionCount = 0;
+            this.BlissfulContributionCount = 0;
+        }
     }
 
     public static class Song{
@@ -845,7 +887,13 @@ public class Project3 {
         int playCount;
         int[] scores; // [heartache, roadtrip, blissful]
         int playlistId;
-        boolean inBlend;
+        boolean inBlendByHeartache;
+        boolean inBlendByRoadtrip;
+        boolean inBlendByBlissful;
+        //AIP = Advanced Index of Priority
+        int heartacheAIP;
+        int roadtripAIP;
+        int blissfulAIP;
         //int nameHash;
 
         public Song(){
@@ -854,27 +902,33 @@ public class Project3 {
             this.playlistId = 0;
             this.playCount = 0;
             this.name = "";
-            this.inBlend = false;
+            this.inBlendByHeartache = false;
+            this.inBlendByRoadtrip = false;
+            this.inBlendByBlissful = false;
             //this.nameHash = 0;
         }
 
-        public Song(int id, String name, int playCount, int[] scores, boolean inBlend){
+        public Song(int id, String name, int playCount, int[] scores){
             this.id = id;
             this.name = name;
             this.playCount = playCount;
             this.scores = scores;
             this.playlistId = 0;
-            this.inBlend = inBlend;
+            this.inBlendByHeartache = false;
+            this.inBlendByRoadtrip = false;
+            this.inBlendByBlissful = false;
             //this.nameHash = computeValue(name);
         }
 
-        public Song(int id, String name, int playCount, int[] scores, int playlistId, boolean inBlend){
+        public Song(int id, String name, int playCount, int[] scores, int playlistId){
             this.id = id;
             this.name = name;
             this.playCount = playCount;
             this.scores = scores;
             this.playlistId = playlistId;
-            this.inBlend = inBlend;
+            this.inBlendByHeartache = false;
+            this.inBlendByRoadtrip = false;
+            this.inBlendByBlissful = false;
             //this.nameHash = computeValue(name);
         }
 
