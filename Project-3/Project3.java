@@ -96,7 +96,7 @@ public class Project3 {
             String[] playlistSongs = inputScanner.nextLine().split(" ");
             for (int j = 0; j < playlistSongs.length; j++) {
                 int songId = Integer.parseInt(playlistSongs[j]);
-                songDatabase[songId - 1].playlistId = i;
+                songDatabase[songId - 1].playlistId = i; // because song id starts from 1 but index starts from 0
                 /*playlists[i].notInBlendHeartache.insert(songDatabase[songId]);
                 playlists[i].notInBlendRoadtrip.insert(songDatabase[songId]);
                 playlists[i].notInBlendBlissful.insert(songDatabase[songId]);
@@ -147,12 +147,373 @@ public class Project3 {
 
     }
 
+    //TODO: yavas olursa cift itarasyon teke cevir
     //TODO: yavas olursa info database iptalet
     public static void addSong(int songId, Song[] songDatabase, Playlist[] playlists, InfoDatabase infoDatabase, boolean isEvent) {
         
-        final int SONG_INDEX = songId - 1;  //TODO:for safety gerekirse sil
-        final int PLAYLIST_ID = songDatabase[SONG_INDEX].playlistId;
+        Song song = songDatabase[songId - 1]; // because song id starts from 1 but index starts from 0
+        Playlist playlist = playlists[song.playlistId];
+        
+        /* HEARTACHE PART */
+        if (song.heartacheAIP > songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) { // song is eligable
+            if (infoDatabase.heartacheCountInBlend < infoDatabase.limitHeartache) {  // blend is not full
+                if (infoDatabase.heartacheCountInBlend == 0) { //blend is empty
+                    infoDatabase.minHeartacheInBlend = song.id;
+                    infoDatabase.heartacheCountInBlend += 1;
+                    song.inBlendByHeartache = true;
+                    playlist.inBlendHeartacheMin = song.id;
+                    playlist.heartacheContributionCount += 1;
+                } else { // blend is not empty but not full
+                    if (playlist.heartacheContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
+                        if (playlist.heartacheContributionCount == 0) { // playlist in blend is empty 
+                            playlist.inBlendHeartacheMin = song.id;
+                            playlist.heartacheContributionCount += 1;
+                            infoDatabase.heartacheCountInBlend += 1;
+                            song.inBlendByHeartache = true;
+                            if (song.heartacheAIP < songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) {
+                                infoDatabase.minHeartacheInBlend = song.id;
+                            }
+                        } else { // playlist in blend is not empty but not full
+                            playlist.heartacheContributionCount += 1;
+                            infoDatabase.heartacheCountInBlend += 1;
+                            song.inBlendByHeartache = true;
+                            if (song.heartacheAIP < songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) {
+                                infoDatabase.minHeartacheInBlend = song.id;
+                            }
+                            if (song.heartacheAIP < songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) {
+                                playlist.inBlendHeartacheMin = song.id;
+                            }
+                        }
+                    } else { // playlist reached its limit
+                        if (song.heartacheAIP > songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) { // bigger than min so remove min from blend
+                            song.inBlendByHeartache = true;
+                            Song minInBlendfromPlaylist = songDatabase[playlist.inBlendHeartacheMin];
+                            minInBlendfromPlaylist.inBlendByHeartache = false;
+                            //itarate tru heartachesort start from min and find new min in that playlist
+                            for (int i = minInBlendfromPlaylist.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                                if (infoDatabase.sortedSongsbyHeartache[i].playlistId == song.playlistId) {
+                                    playlist.inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
+                                    break;
+                                }
+                            }
+                        } else {
+                            // sad?*
+                        }
+                    }
+                }
+            } else { // blend is full
+                Song minInBlend = songDatabase[infoDatabase.minHeartacheInBlend];
+                // burada kaldım
+                if (playlist.heartacheContributionCount < infoDatabase.limitPlaylist) { // playlist did not reach its limit
+                    if (playlist.heartacheContributionCount == 0) { // playlist in blend is empty 
+                        playlist.inBlendHeartacheMin = song.id;
+                        playlist.heartacheContributionCount += 1;
+                        //infoDatabase.heartacheCountInBlend += 1;  because blend count is not changed
+                        song.inBlendByHeartache = true;
+                        // remove min from blend
+                        minInBlend.inBlendByHeartache = false;
+                        playlists[minInBlend.playlistId].heartacheContributionCount -= 1;
+                        //itarate tru heartachesort start from old min and find new min in that blend for playlist of oldmin
+                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                            if (infoDatabase.sortedSongsbyHeartache[i].playlistId == minInBlend.playlistId) {
+                                playlists[minInBlend.playlistId].inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
+                                break;
+                            }
+                        }
+                        //itarate tru heartachesort start from old min and find new min in that blend
+                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                            if (infoDatabase.sortedSongsbyHeartache[i].inBlendByHeartache) {
+                                infoDatabase.minHeartacheInBlend = infoDatabase.sortedSongsbyHeartache[i].id;
+                                break;
+                            }
+                        }
+                    } else { // playlist in blend is not empty but not full
+                        playlist.heartacheContributionCount += 1;
+                        //infoDatabase.heartacheCountInBlend += 1;
+                        song.inBlendByHeartache = true;
+                        // remove min from blend
+                        minInBlend.inBlendByHeartache = false;
+                        playlists[minInBlend.playlistId].heartacheContributionCount -= 1;
+                        //itarate tru heartachesort start from old min and find new min in that blend for playlist of oldmin
+                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                            if (infoDatabase.sortedSongsbyHeartache[i].playlistId == minInBlend.playlistId) {
+                                playlists[minInBlend.playlistId].inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
+                                break;
+                            }
+                        }
+                        //itarate tru heartachesort start from old min and find new min in that blend
+                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                            if (infoDatabase.sortedSongsbyHeartache[i].inBlendByHeartache) {
+                                infoDatabase.minHeartacheInBlend = infoDatabase.sortedSongsbyHeartache[i].id;
+                                break;
+                            }
+                        }
+                        if (song.heartacheAIP < songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) {
+                            playlist.inBlendHeartacheMin = song.id;
+                        }
+                    }
+                } else { // playlist reached its limit
+                    if (song.heartacheAIP > songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) { // bigger than min so remove min from blend
+                        song.inBlendByHeartache = true;
+                        Song minInBlendfromPlaylist = songDatabase[playlist.inBlendHeartacheMin];
+                        minInBlendfromPlaylist.inBlendByHeartache = false;
+                        //itarate tru heartachesort start from min and find new min in that playlist
+                        for (int i = minInBlendfromPlaylist.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                            if (infoDatabase.sortedSongsbyHeartache[i].playlistId == song.playlistId) {
+                                playlist.inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
+                                break;
+                            }
+                        }
+                    } else {
+                        // sad?*
+                    }
+                }
+            }
+        }  else { // song is not eligable
+            // sad ?
+        }
+        /* HEARTACHE PART */
 
+        /* ROADTRIP PART */
+        if (song.roadtripAIP > songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) { // song is eligable
+            if (infoDatabase.roadtripCountInBlend < infoDatabase.limitRoadtrip) {  // blend is not full
+                if (infoDatabase.roadtripCountInBlend == 0) { //blend is empty
+                    infoDatabase.minRoadtripInBlend = song.id;
+                    infoDatabase.roadtripCountInBlend += 1;
+                    song.inBlendByRoadtrip = true;
+                    playlist.inBlendRoadtripMin = song.id;
+                    playlist.roadtripContributionCount += 1;
+                } else { // blend is not empty but not full
+                    if (playlist.roadtripContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
+                        if (playlist.roadtripContributionCount == 0) { // playlist in blend is empty 
+                            playlist.inBlendRoadtripMin = song.id;
+                            playlist.roadtripContributionCount += 1;
+                            infoDatabase.roadtripCountInBlend += 1;
+                            song.inBlendByRoadtrip = true;
+                            if (song.roadtripAIP < songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) {
+                                infoDatabase.minRoadtripInBlend = song.id;
+                            }
+                        } else { // playlist in blend is not empty but not full
+                            playlist.roadtripContributionCount += 1;
+                            infoDatabase.roadtripCountInBlend += 1;
+                            song.inBlendByRoadtrip = true;
+                            if (song.roadtripAIP < songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) {
+                                infoDatabase.minRoadtripInBlend = song.id;
+                            }
+                            if (song.roadtripAIP < songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) {
+                                playlist.inBlendRoadtripMin = song.id;
+                            }
+                        }
+                    } else { // playlist reached its limit
+                        if (song.roadtripAIP > songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) { // bigger than min so remove min from blend
+                            song.inBlendByRoadtrip = true;
+                            Song minInBlendfromPlaylist = songDatabase[playlist.inBlendRoadtripMin];
+                            minInBlendfromPlaylist.inBlendByRoadtrip = false;
+                            //itarate tru roadtripsort start from min and find new min in that playlist
+                            for (int i = minInBlendfromPlaylist.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                                if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == song.playlistId) {
+                                    playlist.inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                                    break;
+                                }
+                            }
+                        } else {
+                            // sad?*
+                        }
+                    }
+                }
+            } else { // blend is full
+                Song minInBlend = songDatabase[infoDatabase.minRoadtripInBlend];
+                // burada kaldım
+                if (playlist.roadtripContributionCount < infoDatabase.limitPlaylist) { // playlist did not reach its limit
+                    if (playlist.roadtripContributionCount == 0) { // playlist in blend is empty 
+                        playlist.inBlendRoadtripMin = song.id;
+                        playlist.roadtripContributionCount += 1;
+                        //infoDatabase.roadtripCountInBlend += 1;  because blend count is not changed
+                        song.inBlendByRoadtrip = true;
+                        // remove min from blend
+                        minInBlend.inBlendByRoadtrip = false;
+                        playlists[minInBlend.playlistId].roadtripContributionCount -= 1;
+                        //itarate tru roadtripsort start from old min and find new min in that blend for playlist of oldmin
+                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                            if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == minInBlend.playlistId) {
+                                playlists[minInBlend.playlistId].inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                                break;
+                            }
+                        }
+                        //itarate tru roadtripsort start from old min and find new min in that blend
+                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                            if (infoDatabase.sortedSongsbyRoadTrip[i].inBlendByRoadtrip) {
+                                infoDatabase.minRoadtripInBlend = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                                break;
+                            }
+                        }
+                    } else { // playlist in blend is not empty but not full
+                        playlist.roadtripContributionCount += 1;
+                        //infoDatabase.roadtripCountInBlend += 1;
+                        song.inBlendByRoadtrip = true;
+                        // remove min from blend
+                        minInBlend.inBlendByRoadtrip = false;
+                        playlists[minInBlend.playlistId].roadtripContributionCount -= 1;
+                        //itarate tru roadtripsort start from old min and find new min in that blend for playlist of oldmin
+                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                            if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == minInBlend.playlistId) {
+                                playlists[minInBlend.playlistId].inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                                break;
+                            }
+                        }
+                        //itarate tru roadtripsort start from old min and find new min in that blend
+                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                            if (infoDatabase.sortedSongsbyRoadTrip[i].inBlendByRoadtrip) {
+                                infoDatabase.minRoadtripInBlend = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                                break;
+                            }
+                        }
+                        if (song.roadtripAIP < songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) {
+                            playlist.inBlendRoadtripMin = song.id;
+                        }
+                    }
+                } else { // playlist reached its limit
+                    if (song.roadtripAIP > songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) { // bigger than min so remove min from blend
+                        song.inBlendByRoadtrip = true;
+                        Song minInBlendfromPlaylist = songDatabase[playlist.inBlendRoadtripMin];
+                        minInBlendfromPlaylist.inBlendByRoadtrip = false;
+                        //itarate tru roadtripsort start from min and find new min in that playlist
+                        for (int i = minInBlendfromPlaylist.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                            if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == song.playlistId) {
+                                playlist.inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                                break;
+                            }
+                        }
+                    } else {
+                        // sad?*
+                    }
+                }
+            }
+        }  else { // song is not eligable
+            // sad ?
+        }
+        /* ROADTRIP PART */
+
+        /* BLISSFUL PART */
+        if (song.blissfulAIP > songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) { // song is eligable
+            if (infoDatabase.blissfulCountInBlend < infoDatabase.limitBlissful) {  // blend is not full
+                if (infoDatabase.blissfulCountInBlend == 0) { //blend is empty
+                    infoDatabase.minBlissfulInBlend = song.id;
+                    infoDatabase.blissfulCountInBlend += 1;
+                    song.inBlendByBlissful = true;
+                    playlist.inBlendBlissfulMin = song.id;
+                    playlist.blissfulContributionCount += 1;
+                } else { // blend is not empty but not full
+                    if (playlist.blissfulContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
+                        if (playlist.blissfulContributionCount == 0) { // playlist in blend is empty
+                            playlist.inBlendBlissfulMin = song.id;
+                            playlist.blissfulContributionCount += 1;
+                            infoDatabase.blissfulCountInBlend += 1;
+                            song.inBlendByBlissful = true;
+                            if (song.blissfulAIP < songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) {
+                                infoDatabase.minBlissfulInBlend = song.id;
+                            }
+                        } else { // playlist in blend is not empty but not full
+                            playlist.blissfulContributionCount += 1;
+                            infoDatabase.blissfulCountInBlend += 1;
+                            song.inBlendByBlissful = true;
+                            if (song.blissfulAIP < songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) {
+                                infoDatabase.minBlissfulInBlend = song.id;
+                            }
+                            if (song.blissfulAIP < songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) {
+                                playlist.inBlendBlissfulMin = song.id;
+                            }
+                        }
+                    } else { // playlist reached its limit
+                        if (song.blissfulAIP > songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) { // bigger than min so remove min from blend
+                            song.inBlendByBlissful = true;
+                            Song minInBlendfromPlaylist = songDatabase[playlist.inBlendBlissfulMin];
+                            minInBlendfromPlaylist.inBlendByBlissful = false;
+                            //itarate tru blissfulsort start from min and find new min in that playlist
+                            for (int i = minInBlendfromPlaylist.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                                if (infoDatabase.sortedSongsbyBlissful[i].playlistId == song.playlistId) {
+                                    playlist.inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
+                                    break;
+                                }
+                            }
+                        } else {
+                            // sad?*
+                        }
+                    }
+                }
+            } else { // blend is full
+                Song minInBlend = songDatabase[infoDatabase.minBlissfulInBlend];
+                // burada kaldım
+                if (playlist.blissfulContributionCount < infoDatabase.limitPlaylist) { // playlist did not reach its limit
+                    if (playlist.blissfulContributionCount == 0) { // playlist in blend is empty
+                        playlist.inBlendBlissfulMin = song.id;
+                        playlist.blissfulContributionCount += 1;
+                        //infoDatabase.blissfulCountInBlend += 1;  because blend count is not changed
+                        song.inBlendByBlissful = true;
+                        // remove min from blend
+                        minInBlend.inBlendByBlissful = false;
+                        playlists[minInBlend.playlistId].blissfulContributionCount -= 1;
+                        //itarate tru blissfulsort start from old min and find new min in that blend for playlist of oldmin
+                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                            if (infoDatabase.sortedSongsbyBlissful[i].playlistId == minInBlend.playlistId) {
+                                playlists[minInBlend.playlistId].inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
+                                break;
+                            }
+                        }
+                        //itarate tru blissfulsort start from old min and find new min in that blend
+                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                            if (infoDatabase.sortedSongsbyBlissful[i].inBlendByBlissful) {
+                                infoDatabase.minBlissfulInBlend = infoDatabase.sortedSongsbyBlissful[i].id;
+                                break;
+                            }
+                        }
+                    } else { // playlist in blend is not empty but not full
+                        playlist.blissfulContributionCount += 1;
+                        //infoDatabase.blissfulCountInBlend += 1;
+                        song.inBlendByBlissful = true;
+                        // remove min from blend
+                        minInBlend.inBlendByBlissful = false;
+                        playlists[minInBlend.playlistId].blissfulContributionCount -= 1;
+                        //itarate tru blissfulsort start from old min and find new min in that blend for playlist of oldmin
+                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                            if (infoDatabase.sortedSongsbyBlissful[i].playlistId == minInBlend.playlistId) {
+                                playlists[minInBlend.playlistId].inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
+                                break;
+                            }
+                        }
+                        //itarate tru blissfulsort start from old min and find new min in that blend
+                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                            if (infoDatabase.sortedSongsbyBlissful[i].inBlendByBlissful) {
+                                infoDatabase.minBlissfulInBlend = infoDatabase.sortedSongsbyBlissful[i].id;
+                                break;
+                            }
+                        }
+                        if (song.blissfulAIP < songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) {
+                            playlist.inBlendBlissfulMin = song.id;
+                        }
+                    }
+                } else { // playlist reached its limit
+                    if (song.blissfulAIP > songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) { // bigger than min so remove min from blend
+                        song.inBlendByBlissful = true;
+                        Song minInBlendfromPlaylist = songDatabase[playlist.inBlendBlissfulMin];
+                        minInBlendfromPlaylist.inBlendByBlissful = false;
+                        //itarate tru blissfulsort start from min and find new min in that playlist
+                        for (int i = minInBlendfromPlaylist.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                            if (infoDatabase.sortedSongsbyBlissful[i].playlistId == song.playlistId) {
+                                playlist.inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
+                                break;
+                            }
+                        }
+                    } else {
+                        // sad?*
+                    }
+                }
+            }
+        }  else { // song is not eligable
+            // sad ?
+        }
+        /* BLISSFUL PART */
+        
 
 
     }
@@ -234,6 +595,14 @@ public class Project3 {
         int limitRoadtrip;
         int limitBlissful;
 
+        int minHeartacheInBlend;
+        int minRoadtripInBlend;
+        int minBlissfulInBlend;
+
+        int heartacheCountInBlend;
+        int roadtripCountInBlend;
+        int blissfulCountInBlend;
+
         public InfoDatabase(int songDatabaseSize) {
             sortedSongsbyPlayCount = new Song[songDatabaseSize];
             sortedSongsbyHeartache = new Song[songDatabaseSize];
@@ -243,6 +612,13 @@ public class Project3 {
             limitHeartache = 0;
             limitRoadtrip = 0;
             limitBlissful = 0;
+            heartacheCountInBlend = 0;
+            roadtripCountInBlend = 0;
+            blissfulCountInBlend = 0;
+            // 0: does not exist, else: song id
+            minHeartacheInBlend = 0;
+            minRoadtripInBlend = 0;
+            minBlissfulInBlend = 0;
         } 
     }
 
@@ -858,26 +1234,29 @@ public class Project3 {
         }
         */
 
+        //??
         int notInBlendHeartacheMax;
         int notInBlendRoadtripMax;
         int notInBlendBlissfulMax;
+        
         int inBlendHeartacheMin;
         int inBlendRoadtripMin;
         int inBlendBlissfulMin;
-        int HeartacheContributionCount;
-        int RoadtripContributionCount;
-        int BlissfulContributionCount;
+        int heartacheContributionCount;
+        int roadtripContributionCount;
+        int blissfulContributionCount;
 
         public Playlist(){
-            this.notInBlendHeartacheMax = -1;
-            this.notInBlendRoadtripMax = -1;
-            this.notInBlendBlissfulMax = -1;
-            this.inBlendHeartacheMin = -1;
-            this.inBlendRoadtripMin = -1;
-            this.inBlendBlissfulMin = -1;
-            this.HeartacheContributionCount = 0;
-            this.RoadtripContributionCount = 0;
-            this.BlissfulContributionCount = 0;
+            // 0: does not exist, else: song id
+            this.notInBlendHeartacheMax = 0;
+            this.notInBlendRoadtripMax = 0;
+            this.notInBlendBlissfulMax = 0;
+            this.inBlendHeartacheMin = 0;
+            this.inBlendRoadtripMin = 0;
+            this.inBlendBlissfulMin = 0;
+            this.heartacheContributionCount = 0;
+            this.roadtripContributionCount = 0;
+            this.blissfulContributionCount = 0;
         }
     }
 
