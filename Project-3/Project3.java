@@ -3,17 +3,19 @@ import java.util.Scanner;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
-
+import java.util.Random;
 import java.io.FileNotFoundException;
 
 public class Project3 {
     public static void main(String[] args) throws FileNotFoundException {
+
+        long initialAllTime = System.currentTimeMillis();
         
-        File songFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\sample-test-cases\\songs.txt");
+        File songFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\test-cases\\songs_small.txt");
         Scanner songScanner = new Scanner(songFile);
         
         Song[] songDatabase = new Song[Integer.parseInt(songScanner.nextLine())];
-        
+
         while (songScanner.hasNextLine()) {
             String[] songInfo = songScanner.nextLine().split(" ");
             int id = Integer.parseInt(songInfo[0]);
@@ -23,7 +25,7 @@ public class Project3 {
             for (int i = 0; i < 3; i++) {
                 scores[i] = Integer.parseInt(songInfo[3 + i]);
             }
-            songDatabase[id-1] = new Song(id, name, playCount, scores); // id starts from 1 but index starts from 0 so use id-1
+            songDatabase[id - 1] = new Song(id, name, playCount, scores); // id starts from 1 but index starts from 0 so use id-1
         }
         songScanner.close();
         long initialTime = System.currentTimeMillis();
@@ -43,8 +45,17 @@ public class Project3 {
         MergeSort.countingSortByBlissful(infoDatabase.sortedSongsbyBlissful, 100);
         long finalTime = System.currentTimeMillis();
         System.out.println("Merge Sort: " + (finalTime - initialTime) + " ms");
+        Song dummySong = new Song(0, "DummySong", 0, new int[]{0, 0, 0});
+        dummySong.heartacheAIP = -1;
+        dummySong.roadtripAIP = -1;
+        dummySong.blissfulAIP = -1;
 
-        for (int i = 0; i < songDatabase.length; i++) {
+        Song[] temp = new Song[songDatabase.length + 1];
+        System.arraycopy(songDatabase, 0, temp, 1, songDatabase.length);
+        temp[0] = dummySong;
+        songDatabase = temp;
+
+        for (int i = 0; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
             infoDatabase.sortedSongsbyHeartache[i].heartacheAIP = i;
             infoDatabase.sortedSongsbyRoadTrip[i].roadtripAIP = i;
             infoDatabase.sortedSongsbyBlissful[i].blissfulAIP = i;
@@ -75,7 +86,7 @@ public class Project3 {
         MaxHeap blissfulHeap = new MaxHeap(100, 2);
         */
         
-        File inputFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\sample-test-cases\\inputs\\sample_0.txt");
+        File inputFile = new File("C:\\BOUN\\CmpE250\\CmpE-250\\Project-3\\test-cases\\inputs\\ask_small.txt");
         Scanner inputScanner = new Scanner(inputFile);
 
         String[] limits = inputScanner.nextLine().split(" ");
@@ -89,14 +100,28 @@ public class Project3 {
 
         Playlist[] playlists = new Playlist[PLAYLIST_COUNT + 1]; //note that playlist id starts from 1 and index 0 is null
 
+        int[][] initialState = new int[PLAYLIST_COUNT + 1][];
+
+        int totalSongCount = 0;
+
         //TODO: playlist sizeları dırektolarak atladım
         for (int i = 1; i < PLAYLIST_COUNT + 1; i++) {
-            inputScanner.nextLine();
+            playlists[i] = new Playlist();
+            String[] playlistInfo = inputScanner.nextLine().split(" ");
+            initialState[i] = new int[Integer.parseInt(playlistInfo[1])];
             // playlistContribitionCounts[i] = 0;
             String[] playlistSongs = inputScanner.nextLine().split(" ");
+            if (playlistSongs[0].equals("")) {
+                continue;
+            }
             for (int j = 0; j < playlistSongs.length; j++) {
                 int songId = Integer.parseInt(playlistSongs[j]);
-                songDatabase[songId - 1].playlistId = i; // because song id starts from 1 but index starts from 0
+                songDatabase[songId].playlistId = i; 
+                initialState[i][j] = songId;
+                totalSongCount++;
+                //addSong(songId, songDatabase, playlists, infoDatabase, false);
+                
+                
                 /*playlists[i].notInBlendHeartache.insert(songDatabase[songId]);
                 playlists[i].notInBlendRoadtrip.insert(songDatabase[songId]);
                 playlists[i].notInBlendBlissful.insert(songDatabase[songId]);
@@ -105,7 +130,69 @@ public class Project3 {
                 blissfulHeap.insert(songDatabase[songId]);*/
             }
         }
+
+
+        long initialRandomTime = System.currentTimeMillis();
+        /* 
+        int[] initialSongIds = new int[totalSongCount];
         
+        int index = 0;
+        for (int i = 1; i < initialState.length; i++) {
+            for (int j = 0; j < initialState[i].length; j++) {
+                initialSongIds[index] = initialState[i][j];
+                index++;
+            }
+        }
+
+
+        Random rand = new Random();
+
+        for (int i = 0; i < initialSongIds.length; i++) {
+            int randomIndexToSwap = rand.nextInt(initialSongIds.length);
+            int temp2 = initialSongIds[randomIndexToSwap];
+            initialSongIds[randomIndexToSwap] = initialSongIds[i];
+            initialSongIds[i] = temp2;
+        }
+        */
+
+        int[] initialSongIds = concatenateArrays(initialState);
+
+        long finalRandomTime = System.currentTimeMillis();
+        System.out.println("Randomize: " + (finalRandomTime - initialRandomTime) + " ms");
+
+        for (int i = 0; i < initialSongIds.length; i++) {
+            addSong(initialSongIds[i], songDatabase, playlists, infoDatabase, false);
+        }
+
+
+        final int EVENT_COUNT = Integer.parseInt(inputScanner.nextLine());
+        for (int i = 0; i < EVENT_COUNT; i++) {
+            String[] event = inputScanner.nextLine().split(" ");
+            switch (event[0]) {
+                case "ADD":
+                    int songId = Integer.parseInt(event[1]);
+                    songDatabase[songId].playlistId = Integer.parseInt(event[2]);
+                    addSong(songId, songDatabase, playlists, infoDatabase, true);
+                    break;
+                case "REM":
+                    int songId2 = Integer.parseInt(event[1]);
+                    removeSong(songId2, songDatabase, playlists, infoDatabase);
+                break;
+                case "ASK": // print all the songs ids in blend in playcount order
+                //TODO: why ters itarate?
+                    for (int j = infoDatabase.sortedSongsbyPlayCount.length - 1; j >= 0; j--) {
+                        if (infoDatabase.sortedSongsbyPlayCount[j].inBlendByHeartache
+                                || infoDatabase.sortedSongsbyPlayCount[j].inBlendByRoadtrip
+                                || infoDatabase.sortedSongsbyPlayCount[j].inBlendByBlissful) {
+                            System.out.print(infoDatabase.sortedSongsbyPlayCount[j].id + " ");
+                        }
+                    }
+                    System.out.println();
+                    default:
+                    //System.out.println("Invalid event type");    
+                    break;
+            }
+        }
 
 
         inputScanner.close();
@@ -145,63 +232,107 @@ public class Project3 {
             System.out.println(heap.remove().scores[0]);
         }*/
 
+        long endAllTime = System.currentTimeMillis();
+        System.out.println("Total Time: " + (endAllTime - initialAllTime) + " ms");
+
     }
+
+    private static int[] concatenateArrays(int[][] array2D) {
+        // Find the maximum row length
+        int maxRowLength = 0;
+        for (int[] row : array2D) {
+            if (row != null) {
+                maxRowLength = Math.max(maxRowLength, row.length);
+            }
+        }
+
+        // Initialize the 1D array with the calculated length
+        int[] resultArray = new int[array2D.length * maxRowLength];
+
+        // Index to keep track of the current position in the result array
+        int currentIndex = 0;
+
+        // Iterate through each column
+        for (int col = 0; col < maxRowLength; col++) {
+            // Iterate through each row
+            for (int[] row : array2D) {
+                // Check if the current row is not null and has elements in the current column
+                if (row != null && col < row.length) {
+                    // Copy the element to the result array
+                    resultArray[currentIndex++] = row[col];
+                }
+            }
+        }
+
+        // Trim the result array to remove trailing zeros
+        return Arrays.copyOf(resultArray, currentIndex);
+    }
+
 
     //TODO: yavas olursa cift itarasyon teke cevir
     //TODO: yavas olursa info database iptalet
     public static void addSong(int songId, Song[] songDatabase, Playlist[] playlists, InfoDatabase infoDatabase, boolean isEvent) {
-        
-        Song song = songDatabase[songId - 1]; // because song id starts from 1 but index starts from 0
+        //if (songId == 4) {
+        //    System.out.println("sad");
+        //}
+        Song song = songDatabase[songId]; // because song id starts from 1 but index starts from 0
         Playlist playlist = playlists[song.playlistId];
         
         /* HEARTACHE PART */
-        if (song.heartacheAIP > songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) { // song is eligable
-            if (infoDatabase.heartacheCountInBlend < infoDatabase.limitHeartache) {  // blend is not full
-                if (infoDatabase.heartacheCountInBlend == 0) { //blend is empty
-                    infoDatabase.minHeartacheInBlend = song.id;
-                    infoDatabase.heartacheCountInBlend += 1;
-                    song.inBlendByHeartache = true;
-                    playlist.inBlendHeartacheMin = song.id;
-                    playlist.heartacheContributionCount += 1;
-                } else { // blend is not empty but not full
-                    if (playlist.heartacheContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
-                        if (playlist.heartacheContributionCount == 0) { // playlist in blend is empty 
-                            playlist.inBlendHeartacheMin = song.id;
-                            playlist.heartacheContributionCount += 1;
-                            infoDatabase.heartacheCountInBlend += 1;
-                            song.inBlendByHeartache = true;
-                            if (song.heartacheAIP < songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) {
-                                infoDatabase.minHeartacheInBlend = song.id;
-                            }
-                        } else { // playlist in blend is not empty but not full
-                            playlist.heartacheContributionCount += 1;
-                            infoDatabase.heartacheCountInBlend += 1;
-                            song.inBlendByHeartache = true;
-                            if (song.heartacheAIP < songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) {
-                                infoDatabase.minHeartacheInBlend = song.id;
-                            }
-                            if (song.heartacheAIP < songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) {
-                                playlist.inBlendHeartacheMin = song.id;
-                            }
+        int heartacheIn = 0;
+        int heartacheOut = 0;
+        if (infoDatabase.heartacheCountInBlend < infoDatabase.limitHeartache) {  // blend is not full
+            if (infoDatabase.heartacheCountInBlend == 0) { //blend is empty
+                infoDatabase.minHeartacheInBlend = song.id;
+                infoDatabase.heartacheCountInBlend += 1;
+                song.inBlendByHeartache = true;
+                heartacheIn = songId;
+                playlist.inBlendHeartacheMin = song.id;
+                playlist.heartacheContributionCount += 1;
+            } else { // blend is not empty but not full
+                if (playlist.heartacheContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
+                    if (playlist.heartacheContributionCount == 0) { // playlist in blend is empty 
+                        playlist.inBlendHeartacheMin = song.id;
+                        playlist.heartacheContributionCount += 1;
+                        infoDatabase.heartacheCountInBlend += 1;
+                        song.inBlendByHeartache = true;
+                        heartacheIn = songId;
+                        if (song.heartacheAIP < songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) {
+                            infoDatabase.minHeartacheInBlend = song.id;
                         }
-                    } else { // playlist reached its limit
-                        if (song.heartacheAIP > songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) { // bigger than min so remove min from blend
-                            song.inBlendByHeartache = true;
-                            Song minInBlendfromPlaylist = songDatabase[playlist.inBlendHeartacheMin];
-                            minInBlendfromPlaylist.inBlendByHeartache = false;
-                            //itarate tru heartachesort start from min and find new min in that playlist
-                            for (int i = minInBlendfromPlaylist.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
-                                if (infoDatabase.sortedSongsbyHeartache[i].playlistId == song.playlistId) {
-                                    playlist.inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
-                                    break;
-                                }
-                            }
-                        } else {
-                            // sad?*
+                    } else { // playlist in blend is not empty but not full
+                        playlist.heartacheContributionCount += 1;
+                        infoDatabase.heartacheCountInBlend += 1;
+                        song.inBlendByHeartache = true;
+                        heartacheIn = songId;
+                        if (song.heartacheAIP < songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) {
+                            infoDatabase.minHeartacheInBlend = song.id;
+                        }
+                        if (song.heartacheAIP < songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) {
+                            playlist.inBlendHeartacheMin = song.id;
                         }
                     }
+                } else { // playlist reached its limit
+                    if (song.heartacheAIP > songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) { // bigger than min so remove min from blend
+                        song.inBlendByHeartache = true;
+                        heartacheIn = songId;
+                        Song minInBlendfromPlaylist = songDatabase[playlist.inBlendHeartacheMin];
+                        minInBlendfromPlaylist.inBlendByHeartache = false;
+                        heartacheOut = minInBlendfromPlaylist.id;
+                        //itarate tru heartachesort start from min and find new min in that playlist
+                        for (int i = minInBlendfromPlaylist.heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                            if (infoDatabase.sortedSongsbyHeartache[i].playlistId == song.playlistId) {
+                                playlist.inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
+                                break;
+                            }
+                        }
+                    } else {
+                        // sad?*
+                    }
                 }
-            } else { // blend is full
+            }
+        } else { // blend is full
+            if (song.heartacheAIP > songDatabase[infoDatabase.minHeartacheInBlend].heartacheAIP) { // song is eligable
                 Song minInBlend = songDatabase[infoDatabase.minHeartacheInBlend];
                 // burada kaldım
                 if (playlist.heartacheContributionCount < infoDatabase.limitPlaylist) { // playlist did not reach its limit
@@ -210,18 +341,20 @@ public class Project3 {
                         playlist.heartacheContributionCount += 1;
                         //infoDatabase.heartacheCountInBlend += 1;  because blend count is not changed
                         song.inBlendByHeartache = true;
+                        heartacheIn = songId;
                         // remove min from blend
                         minInBlend.inBlendByHeartache = false;
+                        heartacheOut = minInBlend.id;
                         playlists[minInBlend.playlistId].heartacheContributionCount -= 1;
                         //itarate tru heartachesort start from old min and find new min in that blend for playlist of oldmin
-                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                        for (int i = minInBlend.heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
                             if (infoDatabase.sortedSongsbyHeartache[i].playlistId == minInBlend.playlistId) {
                                 playlists[minInBlend.playlistId].inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
                                 break;
                             }
                         }
                         //itarate tru heartachesort start from old min and find new min in that blend
-                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                        for (int i = minInBlend.heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
                             if (infoDatabase.sortedSongsbyHeartache[i].inBlendByHeartache) {
                                 infoDatabase.minHeartacheInBlend = infoDatabase.sortedSongsbyHeartache[i].id;
                                 break;
@@ -231,18 +364,20 @@ public class Project3 {
                         playlist.heartacheContributionCount += 1;
                         //infoDatabase.heartacheCountInBlend += 1;
                         song.inBlendByHeartache = true;
+                        heartacheIn = songId;
                         // remove min from blend
                         minInBlend.inBlendByHeartache = false;
+                        heartacheOut = minInBlend.id;
                         playlists[minInBlend.playlistId].heartacheContributionCount -= 1;
                         //itarate tru heartachesort start from old min and find new min in that blend for playlist of oldmin
-                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                        for (int i = minInBlend.heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
                             if (infoDatabase.sortedSongsbyHeartache[i].playlistId == minInBlend.playlistId) {
                                 playlists[minInBlend.playlistId].inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
                                 break;
                             }
                         }
                         //itarate tru heartachesort start from old min and find new min in that blend
-                        for (int i = minInBlend.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                        for (int i = minInBlend.heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
                             if (infoDatabase.sortedSongsbyHeartache[i].inBlendByHeartache) {
                                 infoDatabase.minHeartacheInBlend = infoDatabase.sortedSongsbyHeartache[i].id;
                                 break;
@@ -255,10 +390,12 @@ public class Project3 {
                 } else { // playlist reached its limit
                     if (song.heartacheAIP > songDatabase[playlist.inBlendHeartacheMin].heartacheAIP) { // bigger than min so remove min from blend
                         song.inBlendByHeartache = true;
+                        heartacheIn = songId;
                         Song minInBlendfromPlaylist = songDatabase[playlist.inBlendHeartacheMin];
                         minInBlendfromPlaylist.inBlendByHeartache = false;
+                        heartacheOut = minInBlendfromPlaylist.id;
                         //itarate tru heartachesort start from min and find new min in that playlist
-                        for (int i = minInBlendfromPlaylist.heartacheAIP; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                        for (int i = minInBlendfromPlaylist.heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
                             if (infoDatabase.sortedSongsbyHeartache[i].playlistId == song.playlistId) {
                                 playlist.inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
                                 break;
@@ -267,61 +404,69 @@ public class Project3 {
                     } else {
                         // sad?*
                     }
-                }
-            }
-        }  else { // song is not eligable
+                } 
+            }  else { // song is not eligable
             // sad ?
+            }
         }
+        
         /* HEARTACHE PART */
 
         /* ROADTRIP PART */
-        if (song.roadtripAIP > songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) { // song is eligable
-            if (infoDatabase.roadtripCountInBlend < infoDatabase.limitRoadtrip) {  // blend is not full
-                if (infoDatabase.roadtripCountInBlend == 0) { //blend is empty
-                    infoDatabase.minRoadtripInBlend = song.id;
-                    infoDatabase.roadtripCountInBlend += 1;
-                    song.inBlendByRoadtrip = true;
-                    playlist.inBlendRoadtripMin = song.id;
-                    playlist.roadtripContributionCount += 1;
-                } else { // blend is not empty but not full
-                    if (playlist.roadtripContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
-                        if (playlist.roadtripContributionCount == 0) { // playlist in blend is empty 
-                            playlist.inBlendRoadtripMin = song.id;
-                            playlist.roadtripContributionCount += 1;
-                            infoDatabase.roadtripCountInBlend += 1;
-                            song.inBlendByRoadtrip = true;
-                            if (song.roadtripAIP < songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) {
-                                infoDatabase.minRoadtripInBlend = song.id;
-                            }
-                        } else { // playlist in blend is not empty but not full
-                            playlist.roadtripContributionCount += 1;
-                            infoDatabase.roadtripCountInBlend += 1;
-                            song.inBlendByRoadtrip = true;
-                            if (song.roadtripAIP < songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) {
-                                infoDatabase.minRoadtripInBlend = song.id;
-                            }
-                            if (song.roadtripAIP < songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) {
-                                playlist.inBlendRoadtripMin = song.id;
-                            }
+        int roadtripIn = 0;
+        int roadtripOut = 0;
+        if (infoDatabase.roadtripCountInBlend < infoDatabase.limitRoadtrip) {  // blend is not full
+            if (infoDatabase.roadtripCountInBlend == 0) { //blend is empty
+                infoDatabase.minRoadtripInBlend = song.id;
+                infoDatabase.roadtripCountInBlend += 1;
+                song.inBlendByRoadtrip = true;
+                roadtripIn = songId;
+                playlist.inBlendRoadtripMin = song.id;
+                playlist.roadtripContributionCount += 1;
+            } else { // blend is not empty but not full
+                if (playlist.roadtripContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
+                    if (playlist.roadtripContributionCount == 0) { // playlist in blend is empty 
+                        playlist.inBlendRoadtripMin = song.id;
+                        playlist.roadtripContributionCount += 1;
+                        infoDatabase.roadtripCountInBlend += 1;
+                        song.inBlendByRoadtrip = true;
+                        roadtripIn = songId;
+                        if (song.roadtripAIP < songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) {
+                            infoDatabase.minRoadtripInBlend = song.id;
                         }
-                    } else { // playlist reached its limit
-                        if (song.roadtripAIP > songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) { // bigger than min so remove min from blend
-                            song.inBlendByRoadtrip = true;
-                            Song minInBlendfromPlaylist = songDatabase[playlist.inBlendRoadtripMin];
-                            minInBlendfromPlaylist.inBlendByRoadtrip = false;
-                            //itarate tru roadtripsort start from min and find new min in that playlist
-                            for (int i = minInBlendfromPlaylist.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
-                                if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == song.playlistId) {
-                                    playlist.inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
-                                    break;
-                                }
-                            }
-                        } else {
-                            // sad?*
+                    } else { // playlist in blend is not empty but not full
+                        playlist.roadtripContributionCount += 1;
+                        infoDatabase.roadtripCountInBlend += 1;
+                        song.inBlendByRoadtrip = true;
+                        roadtripIn = songId;
+                        if (song.roadtripAIP < songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) {
+                            infoDatabase.minRoadtripInBlend = song.id;
+                        }
+                        if (song.roadtripAIP < songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) {
+                            playlist.inBlendRoadtripMin = song.id;
                         }
                     }
+                } else { // playlist reached its limit
+                    if (song.roadtripAIP > songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) { // bigger than min so remove min from blend
+                        song.inBlendByRoadtrip = true;
+                        roadtripIn = songId;
+                        Song minInBlendfromPlaylist = songDatabase[playlist.inBlendRoadtripMin];
+                        minInBlendfromPlaylist.inBlendByRoadtrip = false;
+                        roadtripOut = minInBlendfromPlaylist.id;
+                        //itarate tru roadtripsort start from min and find new min in that playlist
+                        for (int i = minInBlendfromPlaylist.roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                            if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == song.playlistId) {
+                                playlist.inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                                break;
+                            }
+                        }
+                    } else {
+                        // sad?*
+                    }
                 }
-            } else { // blend is full
+            }
+        } else { // blend is full
+            if (song.roadtripAIP > songDatabase[infoDatabase.minRoadtripInBlend].roadtripAIP) { // song is eligable
                 Song minInBlend = songDatabase[infoDatabase.minRoadtripInBlend];
                 // burada kaldım
                 if (playlist.roadtripContributionCount < infoDatabase.limitPlaylist) { // playlist did not reach its limit
@@ -330,18 +475,20 @@ public class Project3 {
                         playlist.roadtripContributionCount += 1;
                         //infoDatabase.roadtripCountInBlend += 1;  because blend count is not changed
                         song.inBlendByRoadtrip = true;
+                        roadtripIn = songId;
                         // remove min from blend
                         minInBlend.inBlendByRoadtrip = false;
+                        roadtripOut = minInBlend.id;
                         playlists[minInBlend.playlistId].roadtripContributionCount -= 1;
                         //itarate tru roadtripsort start from old min and find new min in that blend for playlist of oldmin
-                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                        for (int i = minInBlend.roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
                             if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == minInBlend.playlistId) {
                                 playlists[minInBlend.playlistId].inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
                                 break;
                             }
                         }
                         //itarate tru roadtripsort start from old min and find new min in that blend
-                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                        for (int i = minInBlend.roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
                             if (infoDatabase.sortedSongsbyRoadTrip[i].inBlendByRoadtrip) {
                                 infoDatabase.minRoadtripInBlend = infoDatabase.sortedSongsbyRoadTrip[i].id;
                                 break;
@@ -351,18 +498,20 @@ public class Project3 {
                         playlist.roadtripContributionCount += 1;
                         //infoDatabase.roadtripCountInBlend += 1;
                         song.inBlendByRoadtrip = true;
+                        roadtripIn = songId;
                         // remove min from blend
                         minInBlend.inBlendByRoadtrip = false;
+                        roadtripOut = minInBlend.id;
                         playlists[minInBlend.playlistId].roadtripContributionCount -= 1;
                         //itarate tru roadtripsort start from old min and find new min in that blend for playlist of oldmin
-                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                        for (int i = minInBlend.roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
                             if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == minInBlend.playlistId) {
                                 playlists[minInBlend.playlistId].inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
                                 break;
                             }
                         }
                         //itarate tru roadtripsort start from old min and find new min in that blend
-                        for (int i = minInBlend.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                        for (int i = minInBlend.roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
                             if (infoDatabase.sortedSongsbyRoadTrip[i].inBlendByRoadtrip) {
                                 infoDatabase.minRoadtripInBlend = infoDatabase.sortedSongsbyRoadTrip[i].id;
                                 break;
@@ -375,10 +524,12 @@ public class Project3 {
                 } else { // playlist reached its limit
                     if (song.roadtripAIP > songDatabase[playlist.inBlendRoadtripMin].roadtripAIP) { // bigger than min so remove min from blend
                         song.inBlendByRoadtrip = true;
+                        roadtripIn = songId;
                         Song minInBlendfromPlaylist = songDatabase[playlist.inBlendRoadtripMin];
                         minInBlendfromPlaylist.inBlendByRoadtrip = false;
+                        roadtripOut = minInBlendfromPlaylist.id;
                         //itarate tru roadtripsort start from min and find new min in that playlist
-                        for (int i = minInBlendfromPlaylist.roadtripAIP; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                        for (int i = minInBlendfromPlaylist.roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
                             if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == song.playlistId) {
                                 playlist.inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
                                 break;
@@ -387,61 +538,68 @@ public class Project3 {
                     } else {
                         // sad?*
                     }
-                }
-            }
-        }  else { // song is not eligable
+                } 
+            }  else { // song is not eligable
             // sad ?
+            }
         }
         /* ROADTRIP PART */
 
         /* BLISSFUL PART */
-        if (song.blissfulAIP > songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) { // song is eligable
-            if (infoDatabase.blissfulCountInBlend < infoDatabase.limitBlissful) {  // blend is not full
-                if (infoDatabase.blissfulCountInBlend == 0) { //blend is empty
-                    infoDatabase.minBlissfulInBlend = song.id;
-                    infoDatabase.blissfulCountInBlend += 1;
-                    song.inBlendByBlissful = true;
-                    playlist.inBlendBlissfulMin = song.id;
-                    playlist.blissfulContributionCount += 1;
-                } else { // blend is not empty but not full
-                    if (playlist.blissfulContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
-                        if (playlist.blissfulContributionCount == 0) { // playlist in blend is empty
-                            playlist.inBlendBlissfulMin = song.id;
-                            playlist.blissfulContributionCount += 1;
-                            infoDatabase.blissfulCountInBlend += 1;
-                            song.inBlendByBlissful = true;
-                            if (song.blissfulAIP < songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) {
-                                infoDatabase.minBlissfulInBlend = song.id;
-                            }
-                        } else { // playlist in blend is not empty but not full
-                            playlist.blissfulContributionCount += 1;
-                            infoDatabase.blissfulCountInBlend += 1;
-                            song.inBlendByBlissful = true;
-                            if (song.blissfulAIP < songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) {
-                                infoDatabase.minBlissfulInBlend = song.id;
-                            }
-                            if (song.blissfulAIP < songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) {
-                                playlist.inBlendBlissfulMin = song.id;
-                            }
+        int blissfulIn = 0;
+        int blissfulOut = 0;
+        if (infoDatabase.blissfulCountInBlend < infoDatabase.limitBlissful) {  // blend is not full
+            if (infoDatabase.blissfulCountInBlend == 0) { //blend is empty
+                infoDatabase.minBlissfulInBlend = song.id;
+                infoDatabase.blissfulCountInBlend += 1;
+                song.inBlendByBlissful = true;
+                blissfulIn = songId;
+                playlist.inBlendBlissfulMin = song.id;
+                playlist.blissfulContributionCount += 1;
+            } else { // blend is not empty but not full
+                if (playlist.blissfulContributionCount < infoDatabase.limitPlaylist) { //playlist did not reach its limit
+                    if (playlist.blissfulContributionCount == 0) { // playlist in blend is empty
+                        playlist.inBlendBlissfulMin = song.id;
+                        playlist.blissfulContributionCount += 1;
+                        infoDatabase.blissfulCountInBlend += 1;
+                        song.inBlendByBlissful = true;
+                        blissfulIn = songId;
+                        if (song.blissfulAIP < songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) {
+                            infoDatabase.minBlissfulInBlend = song.id;
                         }
-                    } else { // playlist reached its limit
-                        if (song.blissfulAIP > songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) { // bigger than min so remove min from blend
-                            song.inBlendByBlissful = true;
-                            Song minInBlendfromPlaylist = songDatabase[playlist.inBlendBlissfulMin];
-                            minInBlendfromPlaylist.inBlendByBlissful = false;
-                            //itarate tru blissfulsort start from min and find new min in that playlist
-                            for (int i = minInBlendfromPlaylist.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
-                                if (infoDatabase.sortedSongsbyBlissful[i].playlistId == song.playlistId) {
-                                    playlist.inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
-                                    break;
-                                }
-                            }
-                        } else {
-                            // sad?*
+                    } else { // playlist in blend is not empty but not full
+                        playlist.blissfulContributionCount += 1;
+                        infoDatabase.blissfulCountInBlend += 1;
+                        song.inBlendByBlissful = true;
+                        blissfulIn = songId;
+                        if (song.blissfulAIP < songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) {
+                            infoDatabase.minBlissfulInBlend = song.id;
+                        }
+                        if (song.blissfulAIP < songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) {
+                            playlist.inBlendBlissfulMin = song.id;
                         }
                     }
+                } else { // playlist reached its limit
+                    if (song.blissfulAIP > songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) { // bigger than min so remove min from blend
+                        song.inBlendByBlissful = true;
+                        blissfulIn = songId;
+                        Song minInBlendfromPlaylist = songDatabase[playlist.inBlendBlissfulMin];
+                        minInBlendfromPlaylist.inBlendByBlissful = false;
+                        blissfulOut = minInBlendfromPlaylist.id;
+                        //itarate tru blissfulsort start from min and find new min in that playlist
+                        for (int i = minInBlendfromPlaylist.blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                            if (infoDatabase.sortedSongsbyBlissful[i].playlistId == song.playlistId) {
+                                playlist.inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
+                                break;
+                            }
+                        }
+                    } else {
+                        // sad?*
+                    }
                 }
-            } else { // blend is full
+            }
+        } else { // blend is full
+            if (song.blissfulAIP > songDatabase[infoDatabase.minBlissfulInBlend].blissfulAIP) { // song is eligable
                 Song minInBlend = songDatabase[infoDatabase.minBlissfulInBlend];
                 // burada kaldım
                 if (playlist.blissfulContributionCount < infoDatabase.limitPlaylist) { // playlist did not reach its limit
@@ -450,18 +608,20 @@ public class Project3 {
                         playlist.blissfulContributionCount += 1;
                         //infoDatabase.blissfulCountInBlend += 1;  because blend count is not changed
                         song.inBlendByBlissful = true;
+                        blissfulIn = songId;
                         // remove min from blend
                         minInBlend.inBlendByBlissful = false;
+                        blissfulOut = minInBlend.id;
                         playlists[minInBlend.playlistId].blissfulContributionCount -= 1;
                         //itarate tru blissfulsort start from old min and find new min in that blend for playlist of oldmin
-                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                        for (int i = minInBlend.blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
                             if (infoDatabase.sortedSongsbyBlissful[i].playlistId == minInBlend.playlistId) {
                                 playlists[minInBlend.playlistId].inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
                                 break;
                             }
                         }
                         //itarate tru blissfulsort start from old min and find new min in that blend
-                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                        for (int i = minInBlend.blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
                             if (infoDatabase.sortedSongsbyBlissful[i].inBlendByBlissful) {
                                 infoDatabase.minBlissfulInBlend = infoDatabase.sortedSongsbyBlissful[i].id;
                                 break;
@@ -471,18 +631,20 @@ public class Project3 {
                         playlist.blissfulContributionCount += 1;
                         //infoDatabase.blissfulCountInBlend += 1;
                         song.inBlendByBlissful = true;
+                        blissfulIn = songId;
                         // remove min from blend
                         minInBlend.inBlendByBlissful = false;
+                        blissfulOut = minInBlend.id;
                         playlists[minInBlend.playlistId].blissfulContributionCount -= 1;
                         //itarate tru blissfulsort start from old min and find new min in that blend for playlist of oldmin
-                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                        for (int i = minInBlend.blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
                             if (infoDatabase.sortedSongsbyBlissful[i].playlistId == minInBlend.playlistId) {
                                 playlists[minInBlend.playlistId].inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
                                 break;
                             }
                         }
                         //itarate tru blissfulsort start from old min and find new min in that blend
-                        for (int i = minInBlend.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                        for (int i = minInBlend.blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
                             if (infoDatabase.sortedSongsbyBlissful[i].inBlendByBlissful) {
                                 infoDatabase.minBlissfulInBlend = infoDatabase.sortedSongsbyBlissful[i].id;
                                 break;
@@ -495,10 +657,12 @@ public class Project3 {
                 } else { // playlist reached its limit
                     if (song.blissfulAIP > songDatabase[playlist.inBlendBlissfulMin].blissfulAIP) { // bigger than min so remove min from blend
                         song.inBlendByBlissful = true;
+                        blissfulIn = songId;
                         Song minInBlendfromPlaylist = songDatabase[playlist.inBlendBlissfulMin];
                         minInBlendfromPlaylist.inBlendByBlissful = false;
+                        blissfulOut = minInBlendfromPlaylist.id;
                         //itarate tru blissfulsort start from min and find new min in that playlist
-                        for (int i = minInBlendfromPlaylist.blissfulAIP; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                        for (int i = minInBlendfromPlaylist.blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
                             if (infoDatabase.sortedSongsbyBlissful[i].playlistId == song.playlistId) {
                                 playlist.inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
                                 break;
@@ -507,17 +671,105 @@ public class Project3 {
                     } else {
                         // sad?*
                     }
-                }
+                } 
+            }  else { // song is not eligable
+             // sad ?
             }
-        }  else { // song is not eligable
-            // sad ?
-        }
+        } 
         /* BLISSFUL PART */
         
-
-
+        if (isEvent) {
+            System.out.println(heartacheIn + " " + roadtripIn + " " + blissfulIn);
+            System.out.println(heartacheOut + " " + roadtripOut + " " + blissfulOut);
+        }
     }
-/* 
+
+    public static void removeSong(int songId, Song[] songDatabase, Playlist[] playlists, InfoDatabase infoDatabase) {
+        if (songDatabase[songId].inBlendByHeartache) {
+            songDatabase[songId].inBlendByHeartache = false;
+            infoDatabase.heartacheCountInBlend -= 1;
+            playlists[songDatabase[songId].playlistId].heartacheContributionCount -= 1;
+            if (songId == infoDatabase.minHeartacheInBlend) {
+                //itarate tru heartachesort start from old min and find new min in that blend if cannot find assign min to 0
+                for (int i = songDatabase[songId].heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                    if (infoDatabase.sortedSongsbyHeartache[i].inBlendByHeartache) {
+                        infoDatabase.minHeartacheInBlend = infoDatabase.sortedSongsbyHeartache[i].id;
+                        break;
+                    } else if (i == infoDatabase.sortedSongsbyHeartache.length - 1) {
+                        infoDatabase.minHeartacheInBlend = 0;
+                    }
+                }
+            }
+            if (songId == playlists[songDatabase[songId].playlistId].inBlendHeartacheMin) {
+                //itarate tru heartachesort start from old min and find new min in that blend for playlist of oldmin if cannot find assign min to 0
+                for (int i = songDatabase[songId].heartacheAIP + 1; i < infoDatabase.sortedSongsbyHeartache.length; i++) {
+                    if (infoDatabase.sortedSongsbyHeartache[i].playlistId == songDatabase[songId].playlistId) {
+                        playlists[songDatabase[songId].playlistId].inBlendHeartacheMin = infoDatabase.sortedSongsbyHeartache[i].id;
+                        break;
+                    } else if (i == infoDatabase.sortedSongsbyHeartache.length - 1) {
+                        playlists[songDatabase[songId].playlistId].inBlendHeartacheMin = 0;
+                    }
+                }
+            }
+        }
+        if (songDatabase[songId].inBlendByRoadtrip) {
+            songDatabase[songId].inBlendByRoadtrip = false;
+            infoDatabase.roadtripCountInBlend -= 1;
+            playlists[songDatabase[songId].playlistId].roadtripContributionCount -= 1;
+            if (songId == infoDatabase.minRoadtripInBlend) {
+                //itarate tru roadtripsort start from old min and find new min in that blend if cannot find assign min to 0
+                for (int i = songDatabase[songId].roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                    if (infoDatabase.sortedSongsbyRoadTrip[i].inBlendByRoadtrip) {
+                        infoDatabase.minRoadtripInBlend = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                        break;
+                    } else if (i == infoDatabase.sortedSongsbyRoadTrip.length - 1) {
+                        infoDatabase.minRoadtripInBlend = 0;
+                    }
+                }
+            }
+            if (songId == playlists[songDatabase[songId].playlistId].inBlendRoadtripMin) {
+                //itarate tru roadtripsort start from old min and find new min in that blend for playlist of oldmin if cannot find assign min to 0
+                for (int i = songDatabase[songId].roadtripAIP + 1; i < infoDatabase.sortedSongsbyRoadTrip.length; i++) {
+                    if (infoDatabase.sortedSongsbyRoadTrip[i].playlistId == songDatabase[songId].playlistId) {
+                        playlists[songDatabase[songId].playlistId].inBlendRoadtripMin = infoDatabase.sortedSongsbyRoadTrip[i].id;
+                        break;
+                    } else if (i == infoDatabase.sortedSongsbyRoadTrip.length - 1) {
+                        playlists[songDatabase[songId].playlistId].inBlendRoadtripMin = 0;
+                    }
+                }
+            }    
+        }
+        if (songDatabase[songId].inBlendByBlissful) {
+            songDatabase[songId].inBlendByBlissful = false;
+            infoDatabase.blissfulCountInBlend -= 1;
+            playlists[songDatabase[songId].playlistId].blissfulContributionCount -= 1;
+            if (songId == infoDatabase.minBlissfulInBlend) {
+                //itarate tru blissfulsort start from old min and find new min in that blend if cannot find assign min to 0
+                for (int i = songDatabase[songId].blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                    if (infoDatabase.sortedSongsbyBlissful[i].inBlendByBlissful) {
+                        infoDatabase.minBlissfulInBlend = infoDatabase.sortedSongsbyBlissful[i].id;
+                        break;
+                    } else if (i == infoDatabase.sortedSongsbyBlissful.length - 1) {
+                        infoDatabase.minBlissfulInBlend = 0;
+                    }
+                }
+            }
+            if (songId == playlists[songDatabase[songId].playlistId].inBlendBlissfulMin) {
+                //itarate tru blissfulsort start from old min and find new min in that blend for playlist of oldmin if cannot find assign min to 0
+                for (int i = songDatabase[songId].blissfulAIP + 1; i < infoDatabase.sortedSongsbyBlissful.length; i++) {
+                    if (infoDatabase.sortedSongsbyBlissful[i].playlistId == songDatabase[songId].playlistId) {
+                        playlists[songDatabase[songId].playlistId].inBlendBlissfulMin = infoDatabase.sortedSongsbyBlissful[i].id;
+                        break;
+                    } else if (i == infoDatabase.sortedSongsbyBlissful.length - 1) {
+                        playlists[songDatabase[songId].playlistId].inBlendBlissfulMin = 0;
+                    }
+                } 
+            }    
+        }
+        songDatabase[songId].playlistId = 0; 
+    }
+
+    /* 
     // TODO: remove
     public static void testSortSongs() {
         // Create an array of songs
@@ -1320,6 +1572,16 @@ public class Project3 {
         }*/
 
         
+    }
+
+    public static class SongPlaylistIdTuple{
+        int songId;
+        int playlistId;
+
+        public SongPlaylistIdTuple(int songId, int playlistId){
+            this.songId = songId;
+            this.playlistId = playlistId;
+        }
     }
 
     /*public static class StringComparator {
