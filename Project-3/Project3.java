@@ -15,8 +15,6 @@ public class Project3 {
             System.exit(1);
         }
         
-        long initialAllTime = System.currentTimeMillis();
-        
         File songFile = new File(args[0]);
         BufferedReader songScanner = new BufferedReader(new FileReader(songFile));
         
@@ -34,7 +32,6 @@ public class Project3 {
             songDatabase[id - 1] = new Song(id, name, playCount, scores); // id starts from 1 but index starts from 0 so use id-1
         }
         songScanner.close();
-        long initialTime = System.currentTimeMillis();
         InfoDatabase infoDatabase = new InfoDatabase(songDatabase.length);
         System.arraycopy(songDatabase, 0, infoDatabase.sortedSongsbyPlayCount, 0, songDatabase.length);
         Sort.radixSortByName(infoDatabase.sortedSongsbyPlayCount, Sort.findLongestNameLength(songDatabase));
@@ -45,8 +42,6 @@ public class Project3 {
         Sort.countingSortByHeartache(infoDatabase.sortedSongsbyHeartache, 100);
         Sort.countingSortByRoadTrip(infoDatabase.sortedSongsbyRoadTrip, 100);
         Sort.countingSortByBlissful(infoDatabase.sortedSongsbyBlissful, 100);
-        long finalTime = System.currentTimeMillis();
-        System.out.println("Merge Sort: " + (finalTime - initialTime) + " ms");
         Song dummySong = new Song(0, "DummySong", 0, new int[]{0, 0, 0});
         dummySong.heartacheAIP = -1;
         dummySong.roadtripAIP = -1;
@@ -93,30 +88,16 @@ public class Project3 {
             }
         }
 
-
-        long initialRandomTime = System.currentTimeMillis();
-
         int[] initialSongIds = concatenateArrays(initialState);
-
-        long finalRandomTime = System.currentTimeMillis();
-        System.out.println("Randomize: " + (finalRandomTime - initialRandomTime) + " ms");
-
-        long initializeTime = System.currentTimeMillis();
 
         for (int i = 0; i < initialSongIds.length; i++) {
             addSong(initialSongIds[i], songDatabase, playlists, infoDatabase, false);
         }
 
-        long finalInitializeTime = System.currentTimeMillis();
-        System.out.println("Initialize: " + (finalInitializeTime - initializeTime) + " ms");
-        //TODO: remove this
-        PrintStream console = System.out; // save console
-
         File outputFile = new File(args[2]);
         FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
         PrintStream printStream = new PrintStream(fileOutputStream);
         System.setOut(printStream);  // set system out to the file
-
 
         final int EVENT_COUNT = Integer.parseInt(inputScanner.readLine());
         for (int i = 0; i < EVENT_COUNT; i++) {
@@ -147,15 +128,9 @@ public class Project3 {
                     break;
             }
         }
-        
-        System.setOut(console); // set system out to console again
 
 
         inputScanner.close();
-
-        long endAllTime = System.currentTimeMillis();
-        System.out.println("Total Time: " + (endAllTime - initialAllTime) + " ms");
-
     }
 
     private static int[] concatenateArrays(int[][] array2D) {
@@ -665,7 +640,6 @@ public class Project3 {
         }
     }
 
-    //TODO: remove logic errors for efficiency
     public static void removeSong(int songId, Song[] songDatabase, Playlist[] playlists, InfoDatabase infoDatabase) {
 
         Song oldSong = songDatabase[songId];
