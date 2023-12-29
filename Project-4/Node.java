@@ -3,12 +3,25 @@ public class Node {
     private Node parent;
     private int time;
     private double cost;
+    private double distanceToFinish;
 
     public Node(String airportCode, int time, double cost, Node parent) {
         this.airportCode = airportCode;
         this.parent = parent;
         this.time = time;
         this.cost = cost;
+    }
+
+    public Node(String airportCode, int time, double cost, Node parent, double distanceToFinish) {
+        this.airportCode = airportCode;
+        this.parent = parent;
+        this.time = time;
+        this.cost = cost;
+        this.distanceToFinish = distanceToFinish;
+    }
+
+    public double getD() { 
+        return distanceToFinish+cost;
     }
 
     public String getAirportCode() {

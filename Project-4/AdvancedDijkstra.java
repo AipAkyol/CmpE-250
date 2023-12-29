@@ -1,18 +1,21 @@
+import java.io.BufferedWriter;
 import java.util.*;
+import java.io.IOException;
 
 public class AdvancedDijkstra {
 
     private PriorityQueue<Node> pq;
     private HashMap<String, HashMap<String, Boolean>> visited;
+    private BufferedWriter writer;
 
-    public AdvancedDijkstra()
-    {
-        Comparator<Node> comparator = Comparator.comparingDouble(Node::getCost);
+    public AdvancedDijkstra(BufferedWriter writer) {
+        Comparator<Node> comparator = Comparator.comparingDouble(Node::getD);
         pq = new PriorityQueue<>(comparator);
+        this.writer = writer;
     }
 
-    public void dijkstra(HashMap<String, ArrayList<String>> directions, HashMap<String, HashMap<String, Double>> weatherInfo, HashMap<String, Airport> airports,
-                        String source, String destination, int startTime, int deadline, String plane) {
+    public void dijkstra(HashMap<String, ArrayList<String>> directions, HashMap<String, HashMap<String, Double>> weatherInfo,
+     HashMap<String, Airport> airports, String source, String destination, int startTime, int deadline, String plane) throws IOException{
 
         visited = new HashMap<>();
 
@@ -20,11 +23,18 @@ public class AdvancedDijkstra {
             visited.put(airport, new HashMap<>());
         }
         
-        Node sourceNode = new Node(source, startTime, 0, null);
+        double dLat = airports.get(destination).getLatitude();
+        double dLon = airports.get(destination).getLongitude();
+        double hsCost = Calculators.distance(airports.get(source).getLatitude(), airports.get(source).getLongitude(), dLat, dLon);
+        Node sourceNode = new Node(source, startTime, 0, null, hsCost);
         pq.add(sourceNode);
 
         while (pq.size() != 0) {
             Node currentNode = pq.remove();
+            if (visited.get(currentNode.getAirportCode()).containsKey(String.valueOf(currentNode.getTime()))) {
+                continue;
+            }
+
             visited.get(currentNode.getAirportCode()).put(String.valueOf(currentNode.getTime()), true);
 
             if (currentNode.getAirportCode().equals(destination)) {
@@ -38,13 +48,12 @@ public class AdvancedDijkstra {
             double departingWeatherMultiplier = weatherInfo.get(currentAirport.getAirfield()).get(startTimeString);
 
             int parkTime = currentTime + 6*3600;
-            if (parkTime <= deadline) {
+            if (parkTime <= deadline
+             && (!visited.get(currentNode.getAirportCode()).containsKey(String.valueOf(parkTime)))) {
+                double hpCost = Calculators.distance(currentAirport.getLatitude(), currentAirport.getLongitude(), dLat, dLon);
                 double cost = currentNode.getCost() + currentAirport.getParkCost();
-                Node parkNode = new Node(currentNode.getAirportCode(), parkTime, cost, currentNode);
-                if (!visited.get(currentNode.getAirportCode()).containsKey(String.valueOf(parkTime))) {
-                    pq.add(parkNode);
-                }
-                
+                Node parkNode = new Node(currentNode.getAirportCode(), parkTime, cost, currentNode, hpCost);
+                pq.add(parkNode); 
             }
  
             ArrayList<String> neighbours = directions.get(currentNode.getAirportCode());
@@ -53,20 +62,22 @@ public class AdvancedDijkstra {
                 double distance = Calculators.distance(currentAirport.getLatitude(), currentAirport.getLongitude(), neighbourAirport.getLatitude(), neighbourAirport.getLongitude());
                 int flightHours = Calculators.flightDuration(distance, plane);
                 int endTime = currentNode.getTime() + flightHours*3600;
-                if (endTime <= deadline) {
+                if (endTime <= deadline
+                 && (!visited.get(neighbour).containsKey(String.valueOf(endTime)))) {
                     String endTimeString = String.valueOf(endTime);
                     double neighbourWeatherMultiplier = weatherInfo.get(neighbourAirport.getAirfield()).get(endTimeString);
+                    double nhCost = Calculators.distance(neighbourAirport.getLatitude(), neighbourAirport.getLongitude(), dLat, dLon);
                     double cost = currentNode.getCost() + Calculators.flightCost(distance, departingWeatherMultiplier, neighbourWeatherMultiplier);
-                    Node neighbourNode = new Node(neighbour, endTime, cost, currentNode);
-                    if (!visited.get(currentNode.getAirportCode()).containsKey(String.valueOf(endTime))) {
-                        pq.add(neighbourNode);
-                    }
+                    Node neighbourNode = new Node(neighbour, endTime, cost, currentNode,nhCost);
+                    pq.add(neighbourNode);
                 }
             }
         }
-        System.out.println("No possible solution.");
+        writer.write("No possible solution.");
+        writer.newLine();
     }
-    public void printPath(Node targetNode) {
+    
+    public void printPath(Node targetNode) throws IOException{
         StringBuilder path = new StringBuilder();
         Node currentNode = targetNode;
         while (currentNode.getParent() != null) {
@@ -80,6 +91,7 @@ public class AdvancedDijkstra {
         path.insert(0, currentNode.getAirportCode() + " ");
         String cost = String.format("%.5f", targetNode.getCost());
         path.append(cost);
-        System.out.println(path);
+        writer.write(path.toString());
+        writer.newLine();
     }
 }

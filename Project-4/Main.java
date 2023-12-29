@@ -1,25 +1,22 @@
-import java.nio.Buffer;
 import java.util.HashMap;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 public class Main {
  
     public static void main(String[] args) throws FileNotFoundException, IOException{ 
-
-        double startTime = System.nanoTime();
         
         HashMap<Integer, Double> weatherMultipliers = new HashMap<>();
         for (int i = 0; i < 32; i++) {
             weatherMultipliers.put(i, Calculators.weatherMultiplier(i));
         }
 
-        String weatherFileName = "C:\\BOUN\\CmpE250\\CmpE-250\\Project-4\\cases/weather.csv";
+        String weatherFileName = args[2];
         File weatherFile = new File(weatherFileName);
         BufferedReader weatherReader = new BufferedReader(new FileReader(weatherFile));
 
@@ -37,7 +34,7 @@ public class Main {
 
         weatherReader.close();
 
-        String airportsFileName = "C:\\BOUN\\CmpE250\\CmpE-250\\Project-4\\cases\\airports/INTER-2.csv";
+        String airportsFileName = args[0];
         File airportsFile = new File(airportsFileName);
         BufferedReader airportsReader = new BufferedReader(new FileReader(airportsFile));
 
@@ -52,7 +49,7 @@ public class Main {
 
         airportsReader.close();
 
-        String directionsFileName = "C:\\BOUN\\CmpE250\\CmpE-250\\Project-4\\cases\\directions/INTER-2.csv";
+        String directionsFileName = args[1];
         File directionsFile = new File(directionsFileName);
         BufferedReader directionsReader = new BufferedReader(new FileReader(directionsFile));
 
@@ -70,12 +67,17 @@ public class Main {
 
         directionsReader.close();
 
-        String missionFile = "C:\\BOUN\\CmpE250\\CmpE-250\\Project-4\\cases\\missions/INTER-2.in";
+        String missionFile = args[3];
         File mission = new File(missionFile);
         BufferedReader missionReader = new BufferedReader(new FileReader(mission));
 
         String plane = missionReader.readLine();
         
+        String task1FileName = args[4];
+        BufferedWriter task1writer = new BufferedWriter(new java.io.FileWriter(task1FileName));
+        
+        String task2FileName = args[5];
+        BufferedWriter task2writer = new BufferedWriter(new java.io.FileWriter(task2FileName));
 
         while(missionReader.ready()) {
             String line = missionReader.readLine();
@@ -84,14 +86,14 @@ public class Main {
             String endAirport = lineArray[1];
             String timeOrigin = lineArray[2];
             String deadline = lineArray[3];
-            //GraphDijkstra dj = new GraphDijkstra();
-            //dj.dijkstra(directions, weatherInfo, airports, startAirport, endAirport, Integer.parseInt(timeOrigin));
-            AdvancedDijkstra dj = new AdvancedDijkstra();
-            dj.dijkstra(directions, weatherInfo, airports, startAirport, endAirport, Integer.parseInt(timeOrigin), Integer.parseInt(deadline), plane);
+            GraphDijkstra dj = new GraphDijkstra(task1writer);
+            dj.dijkstra(directions, weatherInfo, airports, startAirport, endAirport, Integer.parseInt(timeOrigin));
+            AdvancedDijkstra adj = new AdvancedDijkstra(task2writer);
+            adj.dijkstra(directions, weatherInfo, airports, startAirport, endAirport, Integer.parseInt(timeOrigin), Integer.parseInt(deadline), plane);
         }
 
-        double endTime = System.nanoTime();
-        double duration = (endTime - startTime) / 1000000000;
-        System.out.println(duration);
+        missionReader.close();
+        task1writer.close();
+        task2writer.close();
     }
  }

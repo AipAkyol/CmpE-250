@@ -6,7 +6,7 @@ public class temp {
         //int[] arr = {-1, 2, 3, -4, 5};
         //System.out.println(max_subarray(arr));
         //System.out.println(hash("Cannur Aktas"));
-        int[][] twoDArray = {
+        /*int[][] twoDArray = {
             {1, 2, 3},
             {4, 5},
             {6, 7, 8, 9}
@@ -18,7 +18,11 @@ public class temp {
         // Print the resulting 1D array
         for (int value : oneDArray) {
             System.out.print(value + " ");
-        }
+        }*/
+
+        String binaryString = Integer.toBinaryString(12);
+        binaryString = String.format("%5s", binaryString).replace(' ', '0');
+        System.out.println(binaryString);
     }
 
     private static int[] concatenateArrays(int[][] array2D) {

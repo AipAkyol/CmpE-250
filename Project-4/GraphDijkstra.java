@@ -1,19 +1,22 @@
+import java.io.BufferedWriter;
 import java.util.*;
+import java.io.IOException;
 
 public class GraphDijkstra {
 
     private Set<String> settled;
     private PriorityQueue<Node> pq;
+    private BufferedWriter writer;
 
-    public GraphDijkstra()
-    {
+    public GraphDijkstra(BufferedWriter writer) {
         settled = new HashSet<>();
         Comparator<Node> comparator = Comparator.comparingDouble(Node::getCost);
         pq = new PriorityQueue<>(comparator);
+        this.writer = writer;
     }
 
     public void dijkstra(HashMap<String, ArrayList<String>> directions, HashMap<String, HashMap<String, Double>> weatherInfo, HashMap<String, Airport> airports,
-                        String source, String destination, int time) {
+                        String source, String destination, int time) throws IOException{
         
         Node sourceNode = new Node(source, time, 0, null);
         pq.add(sourceNode);
@@ -47,7 +50,8 @@ public class GraphDijkstra {
             }
         }
     }
-    public void printPath(Node targetNode) {
+    
+    public void printPath(Node targetNode) throws IOException{
         StringBuilder path = new StringBuilder();
         Node currentNode = targetNode;
         while (currentNode.getParent() != null) {
@@ -57,7 +61,8 @@ public class GraphDijkstra {
         path.insert(0, currentNode.getAirportCode() + " ");
         String cost = String.format("%.5f", targetNode.getCost());
         path.append(cost);
-        System.out.println(path);
+        writer.write(path.toString());
+        writer.newLine();
     }
 }
 
